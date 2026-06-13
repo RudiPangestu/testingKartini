@@ -3,7 +3,7 @@
 > Aplikasi presensi sekolah terintegrasi (Web + Mobile) dengan notifikasi otomatis
 > ke orang tua/wali, rekap kehadiran, dan analitik persentase kehadiran.
 
-[![Status](https://img.shields.io/badge/status-planning-yellow)]()
+[![Status](https://img.shields.io/badge/status-in%20development-blue)]()
 [![Lisensi](https://img.shields.io/badge/lisensi-MIT-blue)]()
 
 ---
@@ -69,16 +69,20 @@ Tujuan utama:
 | [docs/NOTIFIKASI.md](docs/NOTIFIKASI.md) | Strategi notifikasi (push, email, WA) |
 | [docs/PERHITUNGAN-KEHADIRAN.md](docs/PERHITUNGAN-KEHADIRAN.md) | Rumus & logika persentase kehadiran |
 
-## 🗺️ Roadmap Singkat
+## 🗺️ Roadmap & Status
 
-- **Fase 0 — Persiapan** (1 minggu): setup repo, tooling, CI.
-- **Fase 1 — Fondasi & Auth** (2 minggu): database, auth, manajemen user.
-- **Fase 2 — Master Data** (2 minggu): CRUD kelas, murid, mapel, jadwal, kegiatan.
-- **Fase 3 — Presensi** (2 minggu): input presensi guru + status kehadiran.
-- **Fase 4 — Laporan & Analitik** (2 minggu): persentase umum & individual.
-- **Fase 5 — Notifikasi** (2 minggu): push, email/WA, reminder H-1.
-- **Fase 6 — Mobile App** (3 minggu): React Native untuk ortu/murid & guru.
-- **Fase 7 — Finalisasi** (2 minggu): testing, deploy, dokumentasi, pelatihan.
+- ✅ **Fase 0 — Persiapan**: setup repo, tooling.
+- ✅ **Fase 1 — Fondasi & Auth**: database, auth (JWT+refresh), manajemen user.
+- ✅ **Fase 2 — Master Data**: CRUD kelas, murid, mapel, jadwal, kegiatan, periode.
+- ✅ **Fase 3 — Presensi**: input presensi guru + status kehadiran.
+- ✅ **Fase 4 — Laporan & Analitik**: persentase umum & individual.
+- ✅ **Fase 5 — Notifikasi**: push (Expo), email (SMTP), reminder H-1.
+- ✅ **Web Admin & Guru**: panel React (presensi, master data, laporan).
+- ⏳ **Fase 6 — Mobile App**: React Native untuk ortu/murid & guru.
+- ⏳ **Fase 7 — Finalisasi**: testing, deploy, dokumentasi.
+
+> Backend API **lengkap & teruji end-to-end** (PostgreSQL). Web Admin/Guru
+> sudah berjalan. Berikutnya: aplikasi mobile.
 
 ## 📁 Struktur Repository (Rencana)
 
