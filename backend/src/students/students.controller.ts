@@ -15,6 +15,10 @@ import { UpdateStudentDto } from './dto/update-student.dto';
 import { QueryStudentDto } from './dto/query-student.dto';
 import { LinkParentDto } from './dto/link-parent.dto';
 import { Roles } from '../common/decorators/roles.decorator';
+import {
+  CurrentUser,
+  JwtUser,
+} from '../common/decorators/current-user.decorator';
 
 @Controller('students')
 export class StudentsController {
@@ -24,6 +28,14 @@ export class StudentsController {
   @Get()
   findAll(@Query() query: QueryStudentDto) {
     return this.studentsService.findAll(query);
+  }
+
+  // Murid milik user login (ORTU: anak-anaknya, MURID: dirinya).
+  // Didefinisikan sebelum ':id' agar tidak tertangkap sebagai param.
+  @Roles(Role.ORTU, Role.MURID)
+  @Get('mine')
+  findMine(@CurrentUser() user: JwtUser) {
+    return this.studentsService.findMine(user.userId, user.role);
   }
 
   @Roles(Role.ADMIN, Role.GURU, Role.ORTU, Role.MURID)

@@ -62,6 +62,20 @@ export class StudentsService {
     return student;
   }
 
+  // Murid milik user saat ini: ORTU -> anak-anaknya, MURID -> dirinya sendiri.
+  async findMine(userId: string, role: string) {
+    const where: Prisma.StudentWhereInput =
+      role === Role.MURID
+        ? { userId }
+        : { parents: { some: { parentUserId: userId } } };
+
+    return this.prisma.student.findMany({
+      where,
+      include: { class: { select: { id: true, name: true } } },
+      orderBy: { fullName: 'asc' },
+    });
+  }
+
   async create(dto: CreateStudentDto) {
     await this.ensureNisnUnique(dto.nisn);
     if (dto.classId) {
