@@ -70,7 +70,29 @@ npx expo start            # uji via Expo Go
 | `WA_GATEWAY_URL`, `WA_TOKEN` | backend | WhatsApp gateway (opsional) |
 | `apiBaseUrl` (app.json `extra`) | mobile | URL API yang dijangkau ponsel |
 
-## 4. Catatan produksi
+## 4. Pengujian
+
+```bash
+cd backend
+npm test                 # unit test (logika laporan & pemicu notifikasi)
+
+# E2E (butuh PostgreSQL):
+export DATABASE_URL=postgresql://sipres:sipres@localhost:5432/sipres?schema=public
+export JWT_ACCESS_SECRET=dev JWT_REFRESH_SECRET=dev
+npx prisma migrate deploy
+npm run test:e2e         # alur HTTP nyata: login→CRUD→presensi→notifikasi→laporan
+```
+
+CI (GitHub Actions) menjalankan unit + e2e (dengan service Postgres), build web,
+dan typecheck mobile pada setiap push.
+
+> **Catatan build di lingkungan terbatas jaringan:** bila registry npm/apk tidak
+> dapat diakses saat `docker build`, tersedia varian *offline*
+> (`backend/Dockerfile.offline`, `web/Dockerfile.offline`,
+> `docker-compose.offline.yml`) yang mengemas artefak hasil build host. Untuk
+> lingkungan normal, gunakan `Dockerfile` standar via `docker-compose.yml`.
+
+## 5. Catatan produksi
 
 - Reminder kegiatan H-1 berjalan via cron internal (17:00 WIB). Pastikan
   kontainer backend tetap hidup (`restart: unless-stopped` sudah diset).

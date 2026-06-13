@@ -8,11 +8,29 @@ on:
 
 jobs:
   backend:
-    name: Backend (build & test)
+    name: Backend (build, unit & e2e)
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sipres
+          POSTGRES_PASSWORD: sipres
+          POSTGRES_DB: sipres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sipres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://sipres:sipres@localhost:5432/sipres?schema=public
+      JWT_ACCESS_SECRET: ci-access
+      JWT_REFRESH_SECRET: ci-refresh
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,6 +42,8 @@ jobs:
       - run: npx prisma generate
       - run: npm run build
       - run: npm test
+      - run: npx prisma migrate deploy
+      - run: npm run test:e2e
 
   web:
     name: Web (build)

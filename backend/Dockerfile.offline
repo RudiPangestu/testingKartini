@@ -1,0 +1,15 @@
+# Dockerfile OFFLINE — khusus verifikasi di sandbox tanpa akses registry npm/apk.
+# Mengemas artefak yang sudah dibangun di host (glibc) ke base glibc node:20
+# (bookworm, sudah memuat libssl3 yang dibutuhkan engine Prisma 3.0.x).
+# Untuk lingkungan nyata gunakan ./Dockerfile (multi-stage standar).
+FROM node:20
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY node_modules ./node_modules
+COPY dist ./dist
+COPY prisma ./prisma
+COPY package.json ./
+
+EXPOSE 3000
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]

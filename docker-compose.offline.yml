@@ -1,0 +1,40 @@
+# Override OFFLINE untuk verifikasi sandbox (image dikemas dari artefak host).
+# Pakai: docker compose -f docker-compose.offline.yml up -d --build
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sipres
+      POSTGRES_PASSWORD: sipres
+      POSTGRES_DB: sipres
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U sipres']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.offline
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://sipres:sipres@db:5432/sipres?schema=public
+      JWT_ACCESS_SECRET: e2e-access
+      JWT_REFRESH_SECRET: e2e-refresh
+      PORT: 3000
+      SEED_ADMIN_EMAIL: admin@kartini.sch.id
+      SEED_ADMIN_PASSWORD: admin12345
+    ports:
+      - '3000:3000'
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile.offline
+    depends_on:
+      - backend
+    ports:
+      - '8080:80'
