@@ -5,21 +5,27 @@ kehadiran (umum & individual).
 
 ## 1. Status Kehadiran
 
-| Status | Kode | Dihitung "Hadir"? |
-|--------|------|-------------------|
-| Hadir | HADIR | ✅ Ya |
-| Sakit | SAKIT | ❌ Tidak (tapi tercatat berhalangan sah) |
-| Izin | IZIN | ❌ Tidak (berhalangan sah) |
-| Alpha | ALPHA | ❌ Tidak (tanpa keterangan) |
+| Status | Kode | Dihitung "Hadir Efektif"? | Dianggap Alpha? |
+|--------|------|:-------------------------:|:---------------:|
+| Hadir | HADIR | ✅ Ya | ❌ Tidak |
+| Sakit | SAKIT | ❌ Tidak | ❌ **Tidak** (berhalangan sah) |
+| Izin | IZIN | ❌ Tidak | ❌ **Tidak** (berhalangan sah) |
+| Alpha | ALPHA | ❌ Tidak | ✅ Ya (tanpa keterangan) |
 
-> **Kebijakan default**: hanya **HADIR** yang dihitung sebagai hadir.
-> Sakit & Izin tetap dilaporkan terpisah agar transparan. Sekolah dapat
-> mengubah kebijakan (mis. Sakit/Izin dianggap "tidak alpha") via pengaturan.
+> **Kebijakan sekolah (terkonfirmasi)**: **Sakit & Izin** adalah berhalangan
+> **sah** dan **TIDAK dihitung sebagai Alpha**. Hanya **ALPHA** yang merupakan
+> ketidakhadiran tanpa keterangan. Karena itu sistem menampilkan dua metrik:
+>
+> - **% Hadir Efektif** = porsi murid benar-benar hadir (hanya HADIR).
+> - **% Kehadiran Sah** = porsi murid yang tidak alpha (HADIR + SAKIT + IZIN).
+>
+> Metrik **% Alpha** menjadi indikator utama masalah kedisiplinan.
 
 ## 2. Rumus Dasar
 
 ```
-% Kehadiran = (Jumlah HADIR / Total Pertemuan Terjadwal) × 100
+% Hadir Efektif  = (Jumlah HADIR / Total Pertemuan Terjadwal) × 100
+% Kehadiran Sah  = ((HADIR + SAKIT + IZIN) / Total Pertemuan) × 100   ← tidak-alpha
 ```
 
 Di mana **Total Pertemuan Terjadwal** = jumlah sesi presensi (`attendance_sessions`)
@@ -28,10 +34,13 @@ yang relevan untuk murid pada periode tertentu.
 Metrik pelengkap yang ikut ditampilkan:
 
 ```
-% Alpha  = (Jumlah ALPHA / Total Pertemuan) × 100
+% Alpha  = (Jumlah ALPHA / Total Pertemuan) × 100   ← indikator utama
 % Sakit  = (Jumlah SAKIT / Total Pertemuan) × 100
 % Izin   = (Jumlah IZIN  / Total Pertemuan) × 100
 ```
+
+> Sesuai kebijakan sekolah, **SAKIT & IZIN tidak menambah angka Alpha**. Keduanya
+> masuk ke **% Kehadiran Sah** namun tidak ke **% Hadir Efektif**.
 
 ## 3. Definisi Periode
 
@@ -99,8 +108,9 @@ Contoh (semester):
   "sakit": 5,
   "izin": 4,
   "alpha": 3,
-  "attendancePercentage": 90.0,
-  "alphaPercentage": 2.5
+  "hadirEfektifPct": 90.0,
+  "kehadiranSahPct": 97.5,
+  "alphaPct": 2.5
 }
 ```
 
@@ -118,7 +128,16 @@ SELECT
   ROUND(
     100.0 * COUNT(*) FILTER (WHERE a.status = 'HADIR') / NULLIF(COUNT(*), 0),
     2
-  ) AS attendance_percentage
+  ) AS hadir_efektif_pct,
+  ROUND(
+    100.0 * COUNT(*) FILTER (WHERE a.status IN ('HADIR','SAKIT','IZIN'))
+      / NULLIF(COUNT(*), 0),
+    2
+  ) AS kehadiran_sah_pct,
+  ROUND(
+    100.0 * COUNT(*) FILTER (WHERE a.status = 'ALPHA') / NULLIF(COUNT(*), 0),
+    2
+  ) AS alpha_pct
 FROM attendance a
 JOIN attendance_sessions sess ON sess.id = a.session_id
 JOIN students s ON s.id = a.student_id

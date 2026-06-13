@@ -119,7 +119,9 @@ Contoh respons `/reports/student/:studentId?period=semester&termId=...`:
   "sakit": 5,
   "izin": 4,
   "alpha": 3,
-  "attendancePercentage": 90.0
+  "hadirEfektifPct": 90.0,
+  "kehadiranSahPct": 97.5,
+  "alphaPct": 2.5
 }
 ```
 
