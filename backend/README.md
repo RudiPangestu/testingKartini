@@ -10,13 +10,15 @@ API REST untuk Sistem Presensi SMA Kartini Batam. Dibangun dengan **NestJS**,
 | Fondasi (Nest + Prisma + config) | ✅ Fase 0 |
 | Auth (JWT access/refresh, RBAC global) | ✅ Fase 1 |
 | Users (CRUD admin + assign role) | ✅ Fase 1 |
-| Classes, Students, Subjects, Schedules, Events | ⏳ Fase 2 |
-| Attendance | ⏳ Fase 3 |
-| Reports | ⏳ Fase 4 |
-| Notifications + Scheduler | ⏳ Fase 5 |
+| Classes, Students, Subjects, Schedules, Events, Terms | ✅ Fase 2 |
+| Attendance (sesi + input + trigger notif) | ✅ Fase 3 |
+| Reports (persentase umum & individual) | ✅ Fase 4 |
+| Notifications (push Expo + email) + Scheduler H-1 | ✅ Fase 5 |
+| Frontend Web (Admin/Guru) | ⏳ Fase berikutnya |
+| Mobile App (Ortu/Murid/Guru) | ⏳ Fase berikutnya |
 
-Skema database **lengkap** sudah tersedia di `prisma/schema.prisma` (mencakup
-seluruh fase), sehingga modul berikutnya tinggal menambah controller/service.
+Seluruh backend (API + logika) sudah lengkap. Skema database penuh ada di
+`prisma/schema.prisma`.
 
 ## Prasyarat
 
@@ -49,6 +51,18 @@ API tersedia di `http://localhost:3000/api/v1`.
 | GET | `/users/:id` | ADMIN | Detail user |
 | PATCH | `/users/:id` | ADMIN | Edit semua field user |
 | DELETE | `/users/:id` | ADMIN | Hapus user |
+| GET/POST/PATCH/DELETE | `/classes` | ADMIN/GURU | CRUD kelas |
+| GET | `/classes/:id/students` | ADMIN/GURU | Murid dalam kelas |
+| GET/POST/PATCH/DELETE | `/students` | ADMIN (read: GURU) | CRUD murid |
+| POST | `/students/:id/parents` | ADMIN | Tautkan akun ortu/wali |
+| CRUD | `/subjects` `/schedules` `/events` `/terms` | ADMIN (read: GURU) | Master data |
+| POST | `/attendance/sessions` | ADMIN/GURU | Buka sesi presensi |
+| PUT | `/attendance/sessions/:id` | ADMIN/GURU | Simpan presensi (memicu notif ortu) |
+| GET | `/attendance/student/:id` | semua | Riwayat kehadiran murid |
+| GET | `/reports/general` | ADMIN/GURU | Persentase umum per periode |
+| GET | `/reports/student/:id` | semua | Persentase individual |
+| POST | `/auth/push-token` | login | Daftarkan token push mobile |
+| GET | `/notifications` | login | Inbox notifikasi |
 
 Contoh login:
 
