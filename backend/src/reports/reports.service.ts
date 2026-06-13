@@ -69,9 +69,10 @@ export class ReportsService {
   // ---------- REKAP PER KELAS ----------
   async byClass(classId: string, period: string, date?: string, termId?: string) {
     const range = await this.resolveRange(period, date, termId);
+    // Pakai snapshot kelas pada sesi (bukan kelas murid saat ini) agar rekap
+    // historis tetap akurat meski murid sudah pindah kelas.
     const where: Prisma.AttendanceWhereInput = {
-      student: { classId },
-      session: this.sessionDateFilter(range),
+      session: { classId, ...this.sessionDateFilter(range) },
     };
     const breakdown = await this.aggregate(where);
     return { scope: 'class', classId, period, range: this.rangeLabel(range), ...breakdown };

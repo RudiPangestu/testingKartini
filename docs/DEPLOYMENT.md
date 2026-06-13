@@ -106,16 +106,19 @@ dan typecheck mobile pada setiap push.
 
 Sudah ditangani: kontrol akses per-murid (ORTU/MURID hanya data sendiri),
 verifikasi user aktif/role tiap request, sesi presensi idempoten, notifikasi
-anti-duplikat, penanganan error DB yang ramah, dan batas pagination.
+anti-duplikat, penanganan error DB yang ramah, batas pagination, **refresh
+token dengan rotasi & revocation** (`POST /auth/logout`), dan **snapshot kelas
+pada sesi presensi** sehingga rekap per kelas akurat walau murid pindah kelas.
 
-Trade-off yang disadari (dapat ditingkatkan sesuai kebutuhan):
+Cara kerja refresh token: setiap login/refresh menyimpan hash (sha256) token
+di tabel `refresh_tokens` dengan `jti`. Saat refresh, token lama dicabut
+(rotasi) dan token bekas tak bisa dipakai ulang; `logout` mencabut token.
 
-- **Refresh token stateless** — tidak ada daftar-cabut (revocation) di server;
-  token tetap valid hingga kedaluwarsa walau logout. Untuk kebutuhan lebih
-  ketat, simpan jti/refresh token di DB dan cabut saat logout.
+Trade-off yang masih disadari:
+
 - **Token disimpan di `localStorage`** pada web (umum untuk SPA) — rentan bila
-  ada XSS. Mitigasi utama: jaga aplikasi bebas XSS; opsi lanjutan: cookie
-  httpOnly + CSRF token.
-- **Laporan per kelas memakai kelas murid saat ini** — bila murid pindah kelas,
-  rekap historis ikut berpindah. Bila perlu akurasi historis, simpan snapshot
-  kelas pada tiap sesi presensi.
+  ada XSS. Dampak dikurangi oleh revocation di atas (sesi dapat dicabut), namun
+  mitigasi utama tetap menjaga aplikasi bebas XSS. Opsi lanjutan: cookie
+  httpOnly + CSRF token (kurang cocok karena API yang sama dipakai mobile).
+- **Pembersihan refresh token kedaluwarsa** belum otomatis; baris lama tetap
+  ada (tak dipakai). Dapat ditambah cron pembersih bila diperlukan.

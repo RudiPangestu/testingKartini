@@ -1,8 +1,14 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
+import { createHash, randomUUID } from 'crypto';
+import { Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
+
+function sha256(value: string): string {
+  return createHash('sha256').update(value).digest('hex');
+}
 
 @Injectable()
 export class AuthService {
@@ -24,7 +30,7 @@ export class AuthService {
       throw new UnauthorizedException('Email atau password salah');
     }
 
-    const tokens = await this.generateTokens(user.id, user.email, user.role);
+    const tokens = await this.issueTokens(user.id, user.email, user.role);
     return {
       user: {
         id: user.id,
@@ -37,20 +43,57 @@ export class AuthService {
   }
 
   async refresh(refreshToken: string) {
+    let payload: { sub: string; jti: string };
+    try {
+      payload = await this.jwt.verifyAsync(refreshToken, {
+        secret: process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret',
+      });
+    } catch {
+      throw new UnauthorizedException('Refresh token tidak valid/kedaluwarsa');
+    }
+
+    // Token harus ada di DB, belum dicabut, dan cocok hash-nya (anti reuse).
+    const record = await this.prisma.refreshToken.findUnique({
+      where: { id: payload.jti },
+    });
+    if (
+      !record ||
+      record.revokedAt ||
+      record.expiresAt < new Date() ||
+      record.tokenHash !== sha256(refreshToken)
+    ) {
+      throw new UnauthorizedException('Refresh token tidak valid/kedaluwarsa');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: record.userId },
+    });
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException();
+    }
+
+    // Rotasi: cabut token lama lalu terbitkan pasangan baru.
+    await this.prisma.refreshToken.update({
+      where: { id: record.id },
+      data: { revokedAt: new Date() },
+    });
+    return this.issueTokens(user.id, user.email, user.role);
+  }
+
+  /** Logout: cabut refresh token yang diberikan (idempoten). */
+  async logout(refreshToken: string) {
     try {
       const payload = await this.jwt.verifyAsync(refreshToken, {
         secret: process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret',
       });
-      const user = await this.prisma.user.findUnique({
-        where: { id: payload.sub },
+      await this.prisma.refreshToken.updateMany({
+        where: { id: payload.jti, revokedAt: null },
+        data: { revokedAt: new Date() },
       });
-      if (!user || !user.isActive) {
-        throw new UnauthorizedException();
-      }
-      return this.generateTokens(user.id, user.email, user.role);
     } catch {
-      throw new UnauthorizedException('Refresh token tidak valid/kedaluwarsa');
+      // token sudah tidak valid -> anggap sudah logout
     }
+    return { message: 'Berhasil keluar' };
   }
 
   async me(userId: string) {
@@ -71,18 +114,34 @@ export class AuthService {
     return user;
   }
 
-  private async generateTokens(userId: string, email: string, role: string) {
-    const payload = { sub: userId, email, role };
-    const [accessToken, refreshToken] = await Promise.all([
-      this.jwt.signAsync(payload, {
+  private async issueTokens(userId: string, email: string, role: Role) {
+    const jti = randomUUID();
+    const accessToken = await this.jwt.signAsync(
+      { sub: userId, email, role },
+      {
         secret: process.env.JWT_ACCESS_SECRET || 'dev-access-secret',
         expiresIn: process.env.JWT_ACCESS_EXPIRES || '15m',
-      }),
-      this.jwt.signAsync(payload, {
+      },
+    );
+    const refreshToken = await this.jwt.signAsync(
+      { sub: userId, jti },
+      {
         secret: process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret',
         expiresIn: process.env.JWT_REFRESH_EXPIRES || '7d',
-      }),
-    ]);
+      },
+    );
+
+    // Simpan catatan refresh token (hash) untuk rotasi & revocation.
+    const decoded = this.jwt.decode(refreshToken) as { exp: number };
+    await this.prisma.refreshToken.create({
+      data: {
+        id: jti,
+        userId,
+        tokenHash: sha256(refreshToken),
+        expiresAt: new Date(decoded.exp * 1000),
+      },
+    });
+
     return { accessToken, refreshToken };
   }
 }

@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../lib/auth';
+import { api } from '../lib/api';
 import { Button, Card } from '../components/ui';
 import { colors } from '../lib/theme';
 
@@ -13,6 +14,14 @@ const ROLE_LABEL: Record<string, string> = {
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
 
+  async function handleLogout() {
+    const refreshToken = useAuth.getState().refreshToken;
+    if (refreshToken) {
+      await api.post('/auth/logout', { refreshToken }).catch(() => {});
+    }
+    await logout();
+  }
+
   return (
     <View style={styles.screen}>
       <Card style={{ marginBottom: 16 }}>
@@ -22,7 +31,7 @@ export default function ProfileScreen() {
         <Row label="Email" value={user?.email ?? '—'} />
         <Row label="Telepon" value={user?.phone ?? '—'} />
       </Card>
-      <Button title="Keluar" variant="danger" onPress={() => logout()} />
+      <Button title="Keluar" variant="danger" onPress={handleLogout} />
       <Text style={styles.footer}>SIPRES Kartini · v0.1.0</Text>
     </View>
   );

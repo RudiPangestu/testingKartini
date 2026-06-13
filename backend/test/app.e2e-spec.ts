@@ -60,8 +60,38 @@ describe('SIPRES Kartini API (e2e)', () => {
   it('login admin mengembalikan access token', async () => {
     const res = await http().post('/api/v1/auth/login').send(ADMIN).expect(200);
     expect(res.body.accessToken).toBeDefined();
+    expect(res.body.refreshToken).toBeDefined();
     expect(res.body.user.role).toBe('ADMIN');
     token = res.body.accessToken;
+  });
+
+  it('rotasi refresh token: token lama tak bisa dipakai ulang', async () => {
+    const login = await http().post('/api/v1/auth/login').send(ADMIN).expect(200);
+    const oldRefresh = login.body.refreshToken;
+
+    // refresh pertama berhasil (rotasi -> token lama dicabut)
+    const refreshed = await http()
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken: oldRefresh })
+      .expect(200);
+    expect(refreshed.body.refreshToken).not.toBe(oldRefresh);
+
+    // memakai ulang token lama -> ditolak
+    await http()
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken: oldRefresh })
+      .expect(401);
+  });
+
+  it('logout mencabut refresh token', async () => {
+    const login = await http().post('/api/v1/auth/login').send(ADMIN).expect(200);
+    const rt = login.body.refreshToken;
+
+    await http().post('/api/v1/auth/logout').send({ refreshToken: rt }).expect(200);
+    await http()
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken: rt })
+      .expect(401);
   });
 
   it('menolak akses tanpa token (401)', async () => {

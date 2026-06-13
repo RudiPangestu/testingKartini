@@ -49,18 +49,22 @@ export class AttendanceService {
   async createSession(dto: CreateSessionDto, userId: string) {
     const sessionDate = new Date(dto.sessionDate);
 
+    // Tentukan snapshot kelas untuk sesi ini (akurasi laporan historis).
+    let classId: string | null = null;
     if (dto.sourceType === AttendanceSource.SCHEDULE) {
       if (!dto.scheduleId) throw new BadRequestException('scheduleId wajib diisi');
       const schedule = await this.prisma.schedule.findUnique({
         where: { id: dto.scheduleId },
       });
       if (!schedule) throw new BadRequestException('Jadwal tidak ditemukan');
+      classId = schedule.classId;
     } else {
       if (!dto.eventId) throw new BadRequestException('eventId wajib diisi');
       const event = await this.prisma.event.findUnique({
         where: { id: dto.eventId },
       });
       if (!event) throw new BadRequestException('Kegiatan tidak ditemukan');
+      classId = event.targetClassId;
     }
 
     // Idempoten: kembalikan sesi yang sudah ada untuk sumber+tanggal yang sama
@@ -86,6 +90,7 @@ export class AttendanceService {
         sourceType: dto.sourceType,
         scheduleId: dto.scheduleId,
         eventId: dto.eventId,
+        classId,
         sessionDate,
         termId: term?.id,
         createdById: userId,
@@ -97,14 +102,7 @@ export class AttendanceService {
   findSessions(query: QuerySessionDto) {
     const where: Prisma.AttendanceSessionWhereInput = {
       ...(query.date ? { sessionDate: new Date(query.date) } : {}),
-      ...(query.classId
-        ? {
-            OR: [
-              { schedule: { classId: query.classId } },
-              { event: { targetClassId: query.classId } },
-            ],
-          }
-        : {}),
+      ...(query.classId ? { classId: query.classId } : {}),
     };
     return this.prisma.attendanceSession.findMany({
       where,

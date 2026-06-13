@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import { api } from '../lib/api';
 import type { Role } from '../lib/types';
 
 interface NavItem {
@@ -26,6 +27,16 @@ export default function Layout() {
   const navigate = useNavigate();
 
   const items = NAV.filter((n) => user && n.roles.includes(user.role));
+
+  async function handleLogout() {
+    const refreshToken = useAuth.getState().refreshToken;
+    // Cabut refresh token di server (best-effort), lalu bersihkan sesi lokal.
+    if (refreshToken) {
+      await api.post('/auth/logout', { refreshToken }).catch(() => {});
+    }
+    logout();
+    navigate('/login');
+  }
 
   return (
     <div className="flex min-h-screen">
@@ -56,13 +67,7 @@ export default function Layout() {
             <div className="font-medium text-gray-800">{user?.fullName}</div>
             <div className="text-xs text-gray-400">{user?.role}</div>
           </div>
-          <button
-            className="btn-ghost w-full"
-            onClick={() => {
-              logout();
-              navigate('/login');
-            }}
-          >
+          <button className="btn-ghost w-full" onClick={handleLogout}>
             Keluar
           </button>
         </div>

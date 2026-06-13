@@ -26,6 +26,13 @@ export class AuthController {
     return this.authService.refresh(dto.refreshToken);
   }
 
+  @Public()
+  @Post('logout')
+  @HttpCode(200)
+  logout(@Body() dto: RefreshDto) {
+    return this.authService.logout(dto.refreshToken);
+  }
+
   @Get('me')
   me(@CurrentUser() user: JwtUser) {
     return this.authService.me(user.userId);
