@@ -15,11 +15,12 @@ Prioritas **gratis**.
 > andalkan **push notification** (mobile) + **email**. WA gateway pihak ketiga bisa
 > dipakai sebagai pelengkap dengan kuota terbatas.
 
-### Rekomendasi
+### Keputusan Proyek (terkonfirmasi)
 
-- **Kanal utama orang tua**: Push (mobile) + Email.
-- **WA**: aktifkan via toggle pengaturan jika sekolah punya akun gateway.
-- Sistem dirancang **multi-channel** — tinggal aktif/nonaktifkan per kanal.
+- **Kanal utama orang tua: Push (mobile) + Email.** Keduanya gratis & andal.
+- **WhatsApp tidak dipakai pada rilis awal** (API resmi berbayar). Arsitektur tetap
+  dirancang **multi-channel** sehingga WA gateway bisa ditambahkan nanti via toggle
+  pengaturan tanpa mengubah inti sistem.
 
 ## 2. Jenis Notifikasi
 
