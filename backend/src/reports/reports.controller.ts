@@ -2,6 +2,10 @@ import { Controller, Get, Param, Query } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { ReportsService } from './reports.service';
 import { Roles } from '../common/decorators/roles.decorator';
+import {
+  CurrentUser,
+  JwtUser,
+} from '../common/decorators/current-user.decorator';
 
 @Controller('reports')
 export class ReportsController {
@@ -23,10 +27,11 @@ export class ReportsController {
   @Get('student/:studentId')
   student(
     @Param('studentId') studentId: string,
+    @CurrentUser() user: JwtUser,
     @Query('period') period = 'semester',
     @Query('termId') termId?: string,
   ) {
-    return this.service.student(studentId, period, termId);
+    return this.service.student(studentId, period, termId, user);
   }
 
   @Roles(Role.ADMIN, Role.GURU)

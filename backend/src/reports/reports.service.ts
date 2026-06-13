@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AttendanceStatus, Prisma, TermType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { JwtUser } from '../common/decorators/current-user.decorator';
+import { assertStudentAccess } from '../common/student-access';
 
 interface DateRange {
   start: Date;
@@ -33,7 +35,15 @@ export class ReportsService {
   }
 
   // ---------- LAPORAN INDIVIDUAL ----------
-  async student(studentId: string, period: string, termId?: string) {
+  async student(
+    studentId: string,
+    period: string,
+    termId?: string,
+    requester?: JwtUser,
+  ) {
+    if (requester) {
+      await assertStudentAccess(this.prisma, requester, studentId);
+    }
     const student = await this.prisma.student.findUnique({
       where: { id: studentId },
       select: { id: true, fullName: true },

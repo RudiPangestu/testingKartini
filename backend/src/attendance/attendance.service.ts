@@ -15,6 +15,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { SaveAttendanceDto } from './dto/save-attendance.dto';
 import { QuerySessionDto } from './dto/query-session.dto';
+import { JwtUser } from '../common/decorators/current-user.decorator';
+import { assertStudentAccess } from '../common/student-access';
 
 const SESSION_INCLUDE = {
   schedule: {
@@ -59,6 +61,21 @@ export class AttendanceService {
         where: { id: dto.eventId },
       });
       if (!event) throw new BadRequestException('Kegiatan tidak ditemukan');
+    }
+
+    // Idempoten: kembalikan sesi yang sudah ada untuk sumber+tanggal yang sama
+    // agar tidak terbuat sesi ganda (yang akan menggandakan hitungan laporan).
+    const existing = await this.prisma.attendanceSession.findFirst({
+      where: {
+        sourceType: dto.sourceType,
+        sessionDate,
+        scheduleId: dto.scheduleId ?? null,
+        eventId: dto.eventId ?? null,
+      },
+      include: SESSION_INCLUDE,
+    });
+    if (existing) {
+      return existing;
     }
 
     // Tentukan periode (semester) yang memuat tanggal — untuk laporan
@@ -109,6 +126,11 @@ export class AttendanceService {
   async saveAttendance(sessionId: string, dto: SaveAttendanceDto, userId: string) {
     const session = await this.findSession(sessionId);
 
+    // Status sebelumnya per murid — untuk menentukan apakah perlu notifikasi.
+    const prevStatus = new Map<string, AttendanceStatus>(
+      session.records.map((r) => [r.studentId, r.status]),
+    );
+
     // Upsert tiap record dalam satu transaksi
     await this.prisma.$transaction(
       dto.records.map((r) =>
@@ -133,11 +155,19 @@ export class AttendanceService {
       ),
     );
 
-    await this.notifyParents(session, dto);
+    // Hanya notifikasi untuk status Sakit/Izin/Alpha yang BARU/BERUBAH,
+    // agar penyuntingan ulang tidak mengirim notifikasi duplikat.
+    const changed = dto.records.filter(
+      (r) =>
+        NOTIFY_STATUSES.includes(r.status) &&
+        prevStatus.get(r.studentId) !== r.status,
+    );
+    await this.notifyParents(session, changed);
     return this.findSession(sessionId);
   }
 
-  async findByStudent(studentId: string) {
+  async findByStudent(studentId: string, requester: JwtUser) {
+    await assertStudentAccess(this.prisma, requester, studentId);
     return this.prisma.attendance.findMany({
       where: { studentId },
       include: {
@@ -155,17 +185,13 @@ export class AttendanceService {
 
   private async notifyParents(
     session: Prisma.AttendanceSessionGetPayload<{ include: typeof SESSION_INCLUDE }>,
-    dto: SaveAttendanceDto,
+    toNotify: SaveAttendanceDto['records'],
   ) {
     const context =
       session.sourceType === AttendanceSource.SCHEDULE
         ? `mata pelajaran ${session.schedule?.subject.name ?? ''}`
         : `kegiatan ${session.event?.title ?? ''}`;
     const tanggal = session.sessionDate.toISOString().slice(0, 10);
-
-    const toNotify = dto.records.filter((r) =>
-      NOTIFY_STATUSES.includes(r.status),
-    );
 
     for (const r of toNotify) {
       const student = await this.prisma.student.findUnique({

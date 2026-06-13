@@ -52,7 +52,10 @@ export class AttendanceController {
 
   @Roles(Role.ADMIN, Role.GURU, Role.ORTU, Role.MURID)
   @Get('student/:studentId')
-  findByStudent(@Param('studentId') studentId: string) {
-    return this.service.findByStudent(studentId);
+  findByStudent(
+    @Param('studentId') studentId: string,
+    @CurrentUser() user: JwtUser,
+  ) {
+    return this.service.findByStudent(studentId, user);
   }
 }

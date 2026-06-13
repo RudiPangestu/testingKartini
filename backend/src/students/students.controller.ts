@@ -40,8 +40,8 @@ export class StudentsController {
 
   @Roles(Role.ADMIN, Role.GURU, Role.ORTU, Role.MURID)
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.studentsService.findOne(id);
+  findOne(@Param('id') id: string, @CurrentUser() user: JwtUser) {
+    return this.studentsService.findOne(id, user);
   }
 
   @Roles(Role.ADMIN)

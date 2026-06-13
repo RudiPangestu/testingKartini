@@ -10,6 +10,8 @@ import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { QueryStudentDto } from './dto/query-student.dto';
 import { LinkParentDto } from './dto/link-parent.dto';
+import { JwtUser } from '../common/decorators/current-user.decorator';
+import { assertStudentAccess } from '../common/student-access';
 
 @Injectable()
 export class StudentsService {
@@ -44,7 +46,12 @@ export class StudentsService {
     return { data, meta: { total, page, limit } };
   }
 
-  async findOne(id: string) {
+  // requester opsional: bila diisi (endpoint publik), validasi kepemilikan.
+  // Pemanggilan internal (admin-only) memanggil tanpa requester.
+  async findOne(id: string, requester?: JwtUser) {
+    if (requester) {
+      await assertStudentAccess(this.prisma, requester, id);
+    }
     const student = await this.prisma.student.findUnique({
       where: { id },
       include: {

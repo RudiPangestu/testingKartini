@@ -15,10 +15,16 @@ describe('SIPRES Kartini API (e2e)', () => {
   let prisma: PrismaService;
   let token: string;
   let ortuId: string;
+  let ortuToken: string;
   let classId: string;
   let studentId: string;
+  let sessionId: string;
 
-  const ADMIN = { email: 'e2e-admin@kartini.sch.id', password: 'admin12345' };
+  // Email unik per run agar test idempoten terhadap DB yang persisten.
+  const ADMIN = {
+    email: `e2e-admin-${Date.now()}@kartini.sch.id`,
+    password: 'admin12345',
+  };
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -34,8 +40,7 @@ describe('SIPRES Kartini API (e2e)', () => {
 
     prisma = app.get(PrismaService);
 
-    // Bersihkan & siapkan admin uji (idempoten)
-    await prisma.user.deleteMany({ where: { email: ADMIN.email } });
+    // Siapkan admin uji (email unik per run)
     await prisma.user.create({
       data: {
         email: ADMIN.email,
@@ -144,9 +149,10 @@ describe('SIPRES Kartini API (e2e)', () => {
         sessionDate: '2026-06-13',
       })
       .expect(201);
+    sessionId = session.body.id;
 
     await http()
-      .put(`/api/v1/attendance/sessions/${session.body.id}`)
+      .put(`/api/v1/attendance/sessions/${sessionId}`)
       .set(auth)
       .send({ records: [{ studentId, status: 'SAKIT', note: 'demam' }] })
       .expect(200);
@@ -156,13 +162,59 @@ describe('SIPRES Kartini API (e2e)', () => {
       .post('/api/v1/auth/login')
       .send({ email: (await prisma.user.findUnique({ where: { id: ortuId } }))!.email, password: 'ortu12345' })
       .expect(200);
+    ortuToken = ortuLogin.body.accessToken;
     const inbox = await http()
       .get('/api/v1/notifications')
-      .set({ Authorization: `Bearer ${ortuLogin.body.accessToken}` })
+      .set({ Authorization: `Bearer ${ortuToken}` })
       .expect(200);
 
     expect(inbox.body.length).toBeGreaterThanOrEqual(1);
     expect(inbox.body[0].body).toContain('SAKIT');
+  });
+
+  it('ortu yang tertaut boleh mengakses laporan anaknya (200)', async () => {
+    await http()
+      .get(`/api/v1/reports/student/${studentId}?period=semester`)
+      .set({ Authorization: `Bearer ${ortuToken}` })
+      .expect(200);
+  });
+
+  it('IDOR: ortu TIDAK boleh mengakses murid yang tak tertaut (403)', async () => {
+    const auth = { Authorization: `Bearer ${token}` };
+    // murid lain milik admin, tidak ditautkan ke ortu uji
+    const other = await http()
+      .post('/api/v1/students')
+      .set(auth)
+      .send({ nisn: `e2e-other-${Date.now()}`, fullName: 'Murid Lain' })
+      .expect(201);
+
+    const headers = { Authorization: `Bearer ${ortuToken}` };
+    await http().get(`/api/v1/students/${other.body.id}`).set(headers).expect(403);
+    await http()
+      .get(`/api/v1/reports/student/${other.body.id}?period=semester`)
+      .set(headers)
+      .expect(403);
+    await http()
+      .get(`/api/v1/attendance/student/${other.body.id}`)
+      .set(headers)
+      .expect(403);
+  });
+
+  it('menyimpan ulang status yang SAMA tidak menambah notifikasi', async () => {
+    const headers = { Authorization: `Bearer ${ortuToken}` };
+    const before = (await http().get('/api/v1/notifications').set(headers)).body
+      .length;
+
+    // PUT ulang dengan status identik (SAKIT) — tidak boleh memicu notifikasi baru
+    await http()
+      .put(`/api/v1/attendance/sessions/${sessionId}`)
+      .set({ Authorization: `Bearer ${token}` })
+      .send({ records: [{ studentId, status: 'SAKIT', note: 'demam' }] })
+      .expect(200);
+
+    const after = (await http().get('/api/v1/notifications').set(headers)).body
+      .length;
+    expect(after).toBe(before);
   });
 
   it('laporan individual: Sakit dihitung Kehadiran Sah, bukan Alpha', async () => {
