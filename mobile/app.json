@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "SIPRES Kartini",
+    "slug": "sipres-kartini",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "sipreskartini",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#c2185b"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "id.sch.kartini.sipres"
+    },
+    "android": {
+      "package": "id.sch.kartini.sipres",
+      "useNextNotificationsApi": true
+    },
+    "plugins": ["expo-notifications"],
+    "extra": {
+      "apiBaseUrl": "http://localhost:3000/api/v1"
+    }
+  }
+}
