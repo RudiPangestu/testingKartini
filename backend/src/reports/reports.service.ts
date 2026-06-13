@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { AttendanceStatus, Prisma } from '@prisma/client';
+import { AttendanceStatus, Prisma, TermType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 interface DateRange {
@@ -120,12 +120,29 @@ export class ReportsService {
   ): Promise<DateRange | null> {
     // Periode berbasis term (mid/semester/triwulan/tahun)
     if (['mid', 'semester', 'triwulan', 'year'].includes(period)) {
-      if (!termId) {
-        // tanpa termId -> seluruh riwayat
-        return null;
+      if (termId) {
+        const term = await this.prisma.term.findUnique({
+          where: { id: termId },
+        });
+        if (!term) throw new BadRequestException('Periode (term) tidak ditemukan');
+        return { start: term.startDate, end: this.addDays(term.endDate, 1) };
       }
-      const term = await this.prisma.term.findUnique({ where: { id: termId } });
-      if (!term) throw new BadRequestException('Periode (term) tidak ditemukan');
+
+      // Tanpa termId: untuk semester/triwulan/mid, pakai periode aktif yang
+      // memuat tanggal acuan. Untuk "year", gunakan seluruh riwayat.
+      const typeMap: Record<string, TermType | undefined> = {
+        semester: TermType.SEMESTER,
+        triwulan: TermType.TRIWULAN,
+        mid: TermType.MID,
+      };
+      const type = typeMap[period];
+      if (!type) return null;
+
+      const ref = date ? new Date(date) : new Date();
+      const term = await this.prisma.term.findFirst({
+        where: { type, startDate: { lte: ref }, endDate: { gte: ref } },
+      });
+      if (!term) return null; // belum ada periode terdefinisi -> seluruh riwayat
       return { start: term.startDate, end: this.addDays(term.endDate, 1) };
     }
 
