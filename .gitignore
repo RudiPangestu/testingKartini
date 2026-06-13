@@ -44,3 +44,6 @@ prisma/*.db
 coverage/
 .cache/
 .turbo/
+
+# TS build info
+*.tsbuildinfo
