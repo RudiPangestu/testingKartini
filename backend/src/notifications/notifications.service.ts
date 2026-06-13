@@ -3,6 +3,7 @@ import { NotificationType, Platform } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from './channels/push.service';
 import { EmailService } from './channels/email.service';
+import { WaService } from './channels/wa.service';
 
 interface NotifyPayload {
   type: NotificationType;
@@ -17,6 +18,7 @@ export class NotificationsService {
     private prisma: PrismaService,
     private push: PushService,
     private email: EmailService,
+    private wa: WaService,
   ) {}
 
   registerPushToken(userId: string, token: string, platform: Platform) {
@@ -70,6 +72,8 @@ export class NotificationsService {
     if (user.email) {
       await this.email.send(user.email, payload.title, payload.body);
     }
+
+    await this.wa.send(user.phone, `${payload.title}\n${payload.body}`);
   }
 
   /** Kirim notifikasi ke semua wali/orang tua dari seorang murid. */

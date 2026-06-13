@@ -79,10 +79,11 @@ Tujuan utama:
 - ✅ **Fase 5 — Notifikasi**: push (Expo), email (SMTP), reminder H-1.
 - ✅ **Web Admin & Guru**: panel React (presensi, master data, laporan).
 - ✅ **Fase 6 — Mobile App**: React Native (Expo) untuk ortu/murid & guru.
-- ⏳ **Fase 7 — Finalisasi**: testing menyeluruh, deploy, dokumentasi.
+- ✅ **Fase 7 — Finalisasi**: unit test, Docker Compose, CI, WhatsApp gateway.
 
-> Backend API, Web Admin/Guru, dan aplikasi Mobile **sudah lengkap**. Sisa:
-> finalisasi (deployment & pengujian end-to-end di perangkat).
+> **Semua fase selesai.** Backend (API + test), Web Admin/Guru, dan Mobile siap
+> dijalankan. Lihat **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** untuk cara deploy
+> (Docker Compose: `docker compose up -d --build`).
 
 ## 📁 Struktur Repository (Rencana)
 
