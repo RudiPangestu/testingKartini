@@ -78,11 +78,11 @@ Tujuan utama:
 - ✅ **Fase 4 — Laporan & Analitik**: persentase umum & individual.
 - ✅ **Fase 5 — Notifikasi**: push (Expo), email (SMTP), reminder H-1.
 - ✅ **Web Admin & Guru**: panel React (presensi, master data, laporan).
-- ⏳ **Fase 6 — Mobile App**: React Native untuk ortu/murid & guru.
-- ⏳ **Fase 7 — Finalisasi**: testing, deploy, dokumentasi.
+- ✅ **Fase 6 — Mobile App**: React Native (Expo) untuk ortu/murid & guru.
+- ⏳ **Fase 7 — Finalisasi**: testing menyeluruh, deploy, dokumentasi.
 
-> Backend API **lengkap & teruji end-to-end** (PostgreSQL). Web Admin/Guru
-> sudah berjalan. Berikutnya: aplikasi mobile.
+> Backend API, Web Admin/Guru, dan aplikasi Mobile **sudah lengkap**. Sisa:
+> finalisasi (deployment & pengujian end-to-end di perangkat).
 
 ## 📁 Struktur Repository (Rencana)
 
