@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { QueryEventDto } from './dto/query-event.dto';
+import { JwtUser } from '../common/decorators/current-user.decorator';
 
 const INCLUDE = {
   targetClass: { select: { id: true, name: true } },
@@ -14,7 +15,7 @@ const INCLUDE = {
 export class EventsService {
   constructor(private prisma: PrismaService) {}
 
-  findAll(query: QueryEventDto) {
+  async findAll(query: QueryEventDto, user?: JwtUser) {
     const where: Prisma.EventWhereInput = {
       ...(query.from || query.to
         ? {
@@ -29,11 +30,35 @@ export class EventsService {
         ? { OR: [{ targetClassId: query.classId }, { targetClassId: null }] }
         : {}),
     };
+
+    // ORTU/MURID hanya melihat kegiatan kelas anak/dirinya + kegiatan umum.
+    if (user && (user.role === Role.ORTU || user.role === Role.MURID)) {
+      const classIds = await this.relevantClassIds(user);
+      where.OR = [
+        { targetClassId: null },
+        ...(classIds.length ? [{ targetClassId: { in: classIds } }] : []),
+      ];
+    }
+
     return this.prisma.event.findMany({
       where,
       include: INCLUDE,
       orderBy: { eventDate: 'asc' },
     });
+  }
+
+  // Kelas yang relevan bagi user: MURID -> kelasnya; ORTU -> kelas anak-anaknya.
+  private async relevantClassIds(user: JwtUser): Promise<string[]> {
+    const students = await this.prisma.student.findMany({
+      where:
+        user.role === Role.MURID
+          ? { userId: user.userId }
+          : { parents: { some: { parentUserId: user.userId } } },
+      select: { classId: true },
+    });
+    return students
+      .map((s) => s.classId)
+      .filter((id): id is string => !!id);
   }
 
   async findOne(id: string) {

@@ -23,11 +23,11 @@ import {
 export class EventsController {
   constructor(private readonly service: EventsService) {}
 
-  // Semua role bisa melihat kegiatan
+  // Semua role bisa melihat kegiatan (ORTU/MURID otomatis difilter ke kelasnya)
   @Roles(Role.ADMIN, Role.GURU, Role.ORTU, Role.MURID)
   @Get()
-  findAll(@Query() query: QueryEventDto) {
-    return this.service.findAll(query);
+  findAll(@Query() query: QueryEventDto, @CurrentUser() user: JwtUser) {
+    return this.service.findAll(query, user);
   }
 
   @Roles(Role.ADMIN, Role.GURU, Role.ORTU, Role.MURID)

@@ -98,4 +98,24 @@ dan typecheck mobile pada setiap push.
   kontainer backend tetap hidup (`restart: unless-stopped` sudah diset).
 - Push notification mobile memakai Expo Push API (gratis) — tidak perlu
   kredensial tambahan untuk Expo Go; untuk build mandiri ikuti dok Expo.
-- Ganti semua secret default sebelum go-live.
+- Ganti semua secret default sebelum go-live. Bila `NODE_ENV=production`,
+  backend **menolak boot** tanpa `JWT_ACCESS_SECRET` & `JWT_REFRESH_SECRET`.
+- Batasi origin web via `CORS_ORIGIN` (mis. `https://app.kartini.sch.id`).
+
+## 6. Catatan keamanan & trade-off yang diketahui
+
+Sudah ditangani: kontrol akses per-murid (ORTU/MURID hanya data sendiri),
+verifikasi user aktif/role tiap request, sesi presensi idempoten, notifikasi
+anti-duplikat, penanganan error DB yang ramah, dan batas pagination.
+
+Trade-off yang disadari (dapat ditingkatkan sesuai kebutuhan):
+
+- **Refresh token stateless** — tidak ada daftar-cabut (revocation) di server;
+  token tetap valid hingga kedaluwarsa walau logout. Untuk kebutuhan lebih
+  ketat, simpan jti/refresh token di DB dan cabut saat logout.
+- **Token disimpan di `localStorage`** pada web (umum untuk SPA) — rentan bila
+  ada XSS. Mitigasi utama: jaga aplikasi bebas XSS; opsi lanjutan: cookie
+  httpOnly + CSRF token.
+- **Laporan per kelas memakai kelas murid saat ini** — bila murid pindah kelas,
+  rekap historis ikut berpindah. Bila perlu akurasi historis, simpan snapshot
+  kelas pada tiap sesi presensi.
