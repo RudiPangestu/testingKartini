@@ -120,5 +120,5 @@ Trade-off yang masih disadari:
   ada XSS. Dampak dikurangi oleh revocation di atas (sesi dapat dicabut), namun
   mitigasi utama tetap menjaga aplikasi bebas XSS. Opsi lanjutan: cookie
   httpOnly + CSRF token (kurang cocok karena API yang sama dipakai mobile).
-- **Pembersihan refresh token kedaluwarsa** belum otomatis; baris lama tetap
-  ada (tak dipakai). Dapat ditambah cron pembersih bila diperlukan.
+- **Pembersihan refresh token** kedaluwarsa/dicabut berjalan otomatis via cron
+  harian (03:00 WIB) di `SchedulerService`.

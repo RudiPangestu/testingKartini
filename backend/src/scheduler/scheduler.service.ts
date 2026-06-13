@@ -12,6 +12,23 @@ export class SchedulerService {
     private notifications: NotificationsService,
   ) {}
 
+  /**
+   * Setiap hari pukul 03:00 WIB — bersihkan refresh token yang sudah
+   * kedaluwarsa atau telah dicabut (tak terpakai lagi) agar tabel tak membengkak.
+   */
+  @Cron('0 3 * * *', { timeZone: 'Asia/Jakarta' })
+  async cleanupRefreshTokens() {
+    const now = new Date();
+    const { count } = await this.prisma.refreshToken.deleteMany({
+      where: {
+        OR: [{ expiresAt: { lt: now } }, { revokedAt: { not: null } }],
+      },
+    });
+    if (count > 0) {
+      this.logger.log(`Pembersihan refresh token: ${count} baris dihapus`);
+    }
+  }
+
   /** Setiap hari pukul 17:00 — kirim reminder kegiatan untuk besok (H-1). */
   @Cron('0 17 * * *', { timeZone: 'Asia/Jakarta' })
   async sendH1Reminders() {
