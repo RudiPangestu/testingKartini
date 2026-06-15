@@ -4,6 +4,7 @@ import { AttendanceService } from './attendance.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { TermsService } from '../terms/terms.module';
 import { NotificationsService } from '../notifications/notifications.service';
+import { SettingsService } from '../settings/settings.module';
 
 /**
  * Memastikan saat presensi disimpan, notifikasi ke orang tua HANYA dipicu
@@ -31,6 +32,14 @@ describe('AttendanceService (pemicu notifikasi)', () => {
   };
   const notifications = { notifyParentsOfStudent: jest.fn().mockResolvedValue(undefined) };
   const terms = { findContaining: jest.fn() };
+  const settings = {
+    get: jest.fn().mockResolvedValue({
+      notifyStatuses: ['SAKIT', 'IZIN', 'ALPHA'],
+      attendanceTemplate: '{nama} {status}',
+    }),
+    render: (t: string, v: Record<string, string>) =>
+      t.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? ''),
+  };
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -39,6 +48,7 @@ describe('AttendanceService (pemicu notifikasi)', () => {
         { provide: PrismaService, useValue: prisma },
         { provide: TermsService, useValue: terms },
         { provide: NotificationsService, useValue: notifications },
+        { provide: SettingsService, useValue: settings },
       ],
     }).compile();
     service = moduleRef.get(AttendanceService);

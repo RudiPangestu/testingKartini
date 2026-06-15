@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { PageHeader } from '../components/ui';
 import { useClasses } from '../lib/hooks';
+import TrendChart from '../components/TrendChart';
 import type { Paginated, ReportResult, Student, Term } from '../lib/types';
 
 type Tab = 'general' | 'class' | 'individual';
@@ -179,6 +180,7 @@ function GeneralReport() {
         )}
       </div>
       {q.data && <ResultView data={q.data} />}
+      <TrendChart days={14} />
     </div>
   );
 }
@@ -239,6 +241,7 @@ function ClassReport() {
         </div>
       </div>
       {q.data && <ResultView data={q.data} />}
+      {classId && <TrendChart classId={classId} days={14} />}
     </div>
   );
 }
@@ -316,6 +319,7 @@ function IndividualReport() {
         </div>
       </div>
       {q.data && <ResultView data={q.data} />}
+      {studentId && <TrendChart studentId={studentId} days={14} />}
     </div>
   );
 }

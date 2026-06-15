@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
+import { retry } from '../../common/retry';
 
 /**
  * Pengiriman email via SMTP (mis. Gmail SMTP - gratis).
@@ -33,14 +34,18 @@ export class EmailService {
       return;
     }
     try {
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM || process.env.SMTP_USER,
-        to,
-        subject,
-        text,
-      });
+      await retry(() =>
+        transporter.sendMail({
+          from: process.env.SMTP_FROM || process.env.SMTP_USER,
+          to,
+          subject,
+          text,
+        }),
+      );
     } catch (err) {
-      this.logger.warn(`Email error ke ${to}: ${(err as Error).message}`);
+      this.logger.warn(
+        `Email gagal setelah retry ke ${to}: ${(err as Error).message}`,
+      );
     }
   }
 }

@@ -95,6 +95,59 @@ export class ReportsService {
     return { scope: 'class', classId, period, range: this.rangeLabel(range), ...breakdown };
   }
 
+  // ---------- TREN (per hari) ----------
+  async trend(
+    opts: { studentId?: string; classId?: string; days?: number },
+    requester?: JwtUser,
+  ) {
+    const days = Math.min(Math.max(Number(opts.days) || 14, 1), 90);
+    const end = this.addDays(this.atMidnight(new Date()), 1); // termasuk hari ini
+    const start = this.addDays(end, -days);
+
+    const where: Prisma.AttendanceWhereInput = {
+      session: { sessionDate: { gte: start, lt: end } },
+    };
+    if (opts.studentId) {
+      if (requester) await assertStudentAccess(this.prisma, requester, opts.studentId);
+      where.studentId = opts.studentId;
+    } else if (opts.classId) {
+      if (requester?.role === 'GURU') {
+        await assertTeacherManagesClass(this.prisma, requester.userId, opts.classId);
+      }
+      where.session = { classId: opts.classId, sessionDate: { gte: start, lt: end } };
+    }
+
+    const rows = await this.prisma.attendance.findMany({
+      where,
+      select: { status: true, session: { select: { sessionDate: true } } },
+    });
+
+    // Bucket per tanggal (YYYY-MM-DD)
+    const buckets = new Map<string, Record<AttendanceStatus, number>>();
+    for (let i = 0; i < days; i++) {
+      const d = this.addDays(start, i).toISOString().slice(0, 10);
+      buckets.set(d, { HADIR: 0, SAKIT: 0, IZIN: 0, ALPHA: 0 });
+    }
+    for (const r of rows) {
+      const key = r.session.sessionDate.toISOString().slice(0, 10);
+      const b = buckets.get(key);
+      if (b) b[r.status] += 1;
+    }
+
+    return {
+      scope: opts.studentId ? 'student' : opts.classId ? 'class' : 'general',
+      days,
+      points: [...buckets.entries()].map(([date, c]) => ({
+        date,
+        hadir: c.HADIR,
+        sakit: c.SAKIT,
+        izin: c.IZIN,
+        alpha: c.ALPHA,
+        total: c.HADIR + c.SAKIT + c.IZIN + c.ALPHA,
+      })),
+    };
+  }
+
   // ---------- HELPER ----------
 
   private async aggregate(where: Prisma.AttendanceWhereInput): Promise<Breakdown> {

@@ -106,6 +106,17 @@ Contoh body `PUT /attendance/sessions/:id`:
 | GET | `/reports/general` | ADMIN, GURU | Persentase umum. Query `period=day\|week\|month\|mid\|semester\|year`, `date`/`termId` |
 | GET | `/reports/student/:studentId` | ADMIN, GURU, ORTU | Persentase individual. Query `period=triwulan\|semester\|year`, `termId` |
 | GET | `/reports/class/:classId` | ADMIN, GURU | Rekap kehadiran per kelas |
+| GET | `/reports/trend` | semua | Tren per hari (grafik). Query `days`, `studentId`/`classId` |
+
+## 9b. Settings (Pengaturan Notifikasi)
+
+| Method | Endpoint | Role | Keterangan |
+|--------|----------|------|-----------|
+| GET | `/settings` | ADMIN | Baca pengaturan (kanal, status pemicu, template, jam reminder) |
+| PUT | `/settings` | ADMIN | Perbarui pengaturan |
+
+Placeholder template: `{nama} {status} {konteks} {mapel} {kelas} {tanggal}`
+(kehadiran), `{judul} {jam} {lokasi}` (reminder).
 
 Contoh respons `/reports/student/:studentId?period=semester&termId=...`:
 

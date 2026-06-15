@@ -336,3 +336,22 @@ model AuditLog {
 
   @@map("audit_logs")
 }
+
+// ===================== PENGATURAN SEKOLAH =====================
+
+// Satu baris (singleton) berisi pengaturan notifikasi & template pesan.
+model Setting {
+  id                 String   @id @default("singleton")
+  channelPush        Boolean  @default(true) @map("channel_push")
+  channelEmail       Boolean  @default(true) @map("channel_email")
+  channelWa          Boolean  @default(false) @map("channel_wa")
+  // Status presensi yang memicu notifikasi ke ortu, mis. ["SAKIT","IZIN","ALPHA"]
+  notifyStatuses     String[] @map("notify_statuses")
+  attendanceTemplate String   @map("attendance_template")
+  reminderTemplate   String   @map("reminder_template")
+  reminderHour       Int      @default(17) @map("reminder_hour")
+  weeklyRecapEnabled Boolean  @default(false) @map("weekly_recap_enabled")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}

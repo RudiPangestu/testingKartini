@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { retry } from '../../common/retry';
 
 /**
  * Pengiriman WhatsApp via gateway HTTP generik (mis. Fonnte/Wablas - gratis/murah).
@@ -18,19 +19,19 @@ export class WaService {
       return; // belum dikonfigurasi atau tidak ada nomor
     }
     try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: token,
-        },
-        body: JSON.stringify({ target: phone, message }),
+      await retry(async () => {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: token,
+          },
+          body: JSON.stringify({ target: phone, message }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
       });
-      if (!res.ok) {
-        this.logger.warn(`WA gagal: HTTP ${res.status}`);
-      }
     } catch (err) {
-      this.logger.warn(`WA error: ${(err as Error).message}`);
+      this.logger.warn(`WA gagal setelah retry: ${(err as Error).message}`);
     }
   }
 }

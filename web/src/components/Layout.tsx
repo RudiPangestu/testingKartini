@@ -20,6 +20,7 @@ const NAV: NavItem[] = [
   { to: '/events', label: 'Kegiatan', roles: ['ADMIN'] },
   { to: '/terms', label: 'Periode', roles: ['ADMIN'] },
   { to: '/announcements', label: 'Pengumuman', roles: ['ADMIN'] },
+  { to: '/settings', label: 'Pengaturan', roles: ['ADMIN'] },
   { to: '/users', label: 'Pengguna', roles: ['ADMIN'] },
 ];
 

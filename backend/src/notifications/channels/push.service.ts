@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { retry } from '../../common/retry';
 
 interface PushMessage {
   title: string;
@@ -37,22 +38,22 @@ export class PushService {
     }));
 
     try {
-      const res = await fetch(this.endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify(messages),
+      // Coba ulang bila gagal sesaat (jaringan / 5xx).
+      const json = await retry(async () => {
+        const res = await fetch(this.endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify(messages),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return (await res.json()) as { data?: ExpoTicket[] };
       });
-      if (!res.ok) {
-        this.logger.warn(`Push gagal: HTTP ${res.status}`);
-        return;
-      }
-      const json = (await res.json()) as { data?: ExpoTicket[] };
       await this.pruneInvalidTokens(valid, json.data ?? []);
     } catch (err) {
-      this.logger.warn(`Push error: ${(err as Error).message}`);
+      this.logger.warn(`Push gagal setelah retry: ${(err as Error).message}`);
     }
   }
 

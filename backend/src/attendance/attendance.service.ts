@@ -20,6 +20,7 @@ import { SaveAttendanceDto } from './dto/save-attendance.dto';
 import { QuerySessionDto } from './dto/query-session.dto';
 import { JwtUser } from '../common/decorators/current-user.decorator';
 import { assertStudentAccess } from '../common/student-access';
+import { SettingsService } from '../settings/settings.module';
 
 const SESSION_INCLUDE = {
   schedule: {
@@ -34,19 +35,13 @@ const SESSION_INCLUDE = {
   },
 } satisfies Prisma.AttendanceSessionInclude;
 
-// Status yang memicu notifikasi ke orang tua
-const NOTIFY_STATUSES: AttendanceStatus[] = [
-  AttendanceStatus.SAKIT,
-  AttendanceStatus.IZIN,
-  AttendanceStatus.ALPHA,
-];
-
 @Injectable()
 export class AttendanceService {
   constructor(
     private prisma: PrismaService,
     private terms: TermsService,
     private notifications: NotificationsService,
+    private settings: SettingsService,
   ) {}
 
   async createSession(dto: CreateSessionDto, user: JwtUser) {
@@ -214,14 +209,18 @@ export class AttendanceService {
       ),
     );
 
-    // Hanya notifikasi untuk status Sakit/Izin/Alpha yang BARU/BERUBAH,
+    // Status pemicu notifikasi dapat dikonfigurasi admin (default S/I/A).
+    const cfg = await this.settings.get();
+    const notifyStatuses = cfg.notifyStatuses as AttendanceStatus[];
+
+    // Hanya notifikasi untuk status pemicu yang BARU/BERUBAH,
     // agar penyuntingan ulang tidak mengirim notifikasi duplikat.
     const changed = dto.records.filter(
       (r) =>
-        NOTIFY_STATUSES.includes(r.status) &&
+        notifyStatuses.includes(r.status) &&
         prevStatus.get(r.studentId) !== r.status,
     );
-    await this.notifyParents(session, changed);
+    await this.notifyParents(session, changed, cfg.attendanceTemplate);
     return this.findSession(sessionId);
   }
 
@@ -245,11 +244,13 @@ export class AttendanceService {
   private async notifyParents(
     session: Prisma.AttendanceSessionGetPayload<{ include: typeof SESSION_INCLUDE }>,
     toNotify: SaveAttendanceDto['records'],
+    template: string,
   ) {
     const context =
       session.sourceType === AttendanceSource.SCHEDULE
         ? `mata pelajaran ${session.schedule?.subject.name ?? ''}`
         : `kegiatan ${session.event?.title ?? ''}`;
+    const kelas = session.schedule?.class.name ?? '';
     const tanggal = session.sessionDate.toISOString().slice(0, 10);
 
     for (const r of toNotify) {
@@ -258,10 +259,18 @@ export class AttendanceService {
         select: { fullName: true },
       });
       if (!student) continue;
+      const body = this.settings.render(template, {
+        nama: student.fullName,
+        status: r.status,
+        konteks: context,
+        mapel: session.schedule?.subject.name ?? '',
+        kelas,
+        tanggal,
+      });
       await this.notifications.notifyParentsOfStudent(r.studentId, {
         type: 'KEHADIRAN',
         title: 'Laporan Kehadiran',
-        body: `Ananda ${student.fullName} tercatat ${r.status} pada ${context}, tanggal ${tanggal}.`,
+        body,
         data: { studentId: r.studentId, status: r.status },
       });
     }

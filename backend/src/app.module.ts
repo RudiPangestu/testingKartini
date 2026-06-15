@@ -13,6 +13,7 @@ import { SubjectsModule } from './subjects/subjects.module';
 import { SchedulesModule } from './schedules/schedules.module';
 import { EventsModule } from './events/events.module';
 import { TermsModule } from './terms/terms.module';
+import { SettingsModule } from './settings/settings.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { ReportsModule } from './reports/reports.module';
@@ -33,6 +34,7 @@ import { SchedulerModule } from './scheduler/scheduler.module';
     SchedulesModule,
     EventsModule,
     TermsModule,
+    SettingsModule,
     NotificationsModule,
     AttendanceModule,
     ReportsModule,

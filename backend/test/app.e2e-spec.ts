@@ -290,6 +290,32 @@ describe('SIPRES Kartini API (e2e)', () => {
     expect(after[0].title).toBe('Libur');
   });
 
+  it('pengaturan: admin dapat membaca & memperbarui pengaturan notifikasi', async () => {
+    const auth = { Authorization: `Bearer ${token}` };
+
+    const get = await http().get('/api/v1/settings').set(auth).expect(200);
+    expect(get.body.notifyStatuses).toEqual(
+      expect.arrayContaining(['SAKIT', 'IZIN', 'ALPHA']),
+    );
+
+    const put = await http()
+      .put('/api/v1/settings')
+      .set(auth)
+      .send({ channelWa: true, reminderHour: 18 })
+      .expect(200);
+    expect(put.body.channelWa).toBe(true);
+    expect(put.body.reminderHour).toBe(18);
+  });
+
+  it('tren: mengembalikan titik per hari', async () => {
+    const res = await http()
+      .get('/api/v1/reports/trend?days=7')
+      .set({ Authorization: `Bearer ${token}` })
+      .expect(200);
+    expect(res.body.points).toHaveLength(7);
+    expect(res.body.points[0]).toHaveProperty('hadir');
+  });
+
   it('laporan individual: Sakit dihitung Kehadiran Sah, bukan Alpha', async () => {
     const res = await http()
       .get(`/api/v1/reports/student/${studentId}?period=semester`)

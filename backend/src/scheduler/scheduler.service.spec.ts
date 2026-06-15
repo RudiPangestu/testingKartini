@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { SchedulerService } from './scheduler.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { SettingsService } from '../settings/settings.module';
 
 describe('SchedulerService.cleanupRefreshTokens', () => {
   let service: SchedulerService;
@@ -16,6 +17,7 @@ describe('SchedulerService.cleanupRefreshTokens', () => {
           useValue: { refreshToken: { deleteMany } },
         },
         { provide: NotificationsService, useValue: {} },
+        { provide: SettingsService, useValue: { get: jest.fn(), render: jest.fn() } },
       ],
     }).compile();
     service = moduleRef.get(SchedulerService);

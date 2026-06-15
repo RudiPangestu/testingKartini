@@ -34,6 +34,21 @@ export class ReportsController {
     return this.service.student(studentId, period, termId, user);
   }
 
+  // Tren kehadiran per hari (untuk grafik). Filter opsional studentId/classId.
+  @Roles(Role.ADMIN, Role.GURU, Role.ORTU, Role.MURID)
+  @Get('trend')
+  trend(
+    @CurrentUser() user: JwtUser,
+    @Query('days') days?: string,
+    @Query('studentId') studentId?: string,
+    @Query('classId') classId?: string,
+  ) {
+    return this.service.trend(
+      { studentId, classId, days: days ? Number(days) : undefined },
+      user,
+    );
+  }
+
   @Roles(Role.ADMIN, Role.GURU)
   @Get('class/:classId')
   byClass(

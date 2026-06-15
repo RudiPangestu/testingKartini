@@ -126,3 +126,29 @@ export interface Paginated<T> {
   data: T[];
   meta: { total: number; page: number; limit: number };
 }
+
+export interface Setting {
+  channelPush: boolean;
+  channelEmail: boolean;
+  channelWa: boolean;
+  notifyStatuses: string[];
+  attendanceTemplate: string;
+  reminderTemplate: string;
+  reminderHour: number;
+  weeklyRecapEnabled: boolean;
+}
+
+export interface TrendPoint {
+  date: string;
+  hadir: number;
+  sakit: number;
+  izin: number;
+  alpha: number;
+  total: number;
+}
+
+export interface TrendResult {
+  scope: string;
+  days: number;
+  points: TrendPoint[];
+}

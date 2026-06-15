@@ -114,16 +114,18 @@ sesi presensi, **pengumuman** admin (`POST /notifications/broadcast`),
 deteksi **"kelas belum diabsen"** (`GET /attendance/unmarked`), dan
 pembersihan otomatis **push token** yang tak terdaftar lagi.
 
-Fitur sekunder yang sengaja ditangguhkan (nilai rendah / effort besar,
-dapat ditambah kemudian):
+Telah ditambahkan juga: **pengaturan & template notifikasi** (kanal aktif,
+status pemicu, template pesan, jam reminder — `GET/PUT /settings` + halaman web
+Pengaturan), **rekap mingguan via email** (cron Minggu, dapat dimatikan),
+**retry** pengiriman notifikasi (backoff eksponensial), dan **grafik tren**
+per hari (`GET /reports/trend` + chart di web).
 
-- **Template notifikasi + pengaturan sekolah** (kanal aktif, jam reminder,
-  status mana yang dinotif) — saat ini hardcoded ke Sakit/Izin/Alpha.
-- **Rekap mingguan via email** (ditandai opsional di rencana).
-- **Retry queue** pengiriman notifikasi (saat ini best-effort + token mati
-  dibersihkan otomatis).
-- **Grafik tren** time-series penuh (kini ada bar proporsi ringkas di UI).
-- **shadcn/ui** (dipakai komponen Tailwind sendiri, fungsional setara).
+Satu-satunya item rencana yang sengaja TIDAK dikerjakan:
+
+- **shadcn/ui** — ini preferensi tooling, bukan fitur. Aplikasi memakai sistem
+  komponen Tailwind sendiri yang **fungsional setara** (konsisten, aksesibel,
+  responsif). Migrasi penuh ke shadcn/ui berarti menulis ulang seluruh UI tanpa
+  nilai fungsional dan berisiko regresi, sehingga ditahan kecuali diminta.
 
 Cara kerja refresh token: setiap login/refresh menyimpan hash (sha256) token
 di tabel `refresh_tokens` dengan `jti`. Saat refresh, token lama dicabut
