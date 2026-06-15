@@ -105,10 +105,25 @@ dan typecheck mobile pada setiap push.
 ## 6. Catatan keamanan & trade-off yang diketahui
 
 Sudah ditangani: kontrol akses per-murid (ORTU/MURID hanya data sendiri),
-verifikasi user aktif/role tiap request, sesi presensi idempoten, notifikasi
-anti-duplikat, penanganan error DB yang ramah, batas pagination, **refresh
-token dengan rotasi & revocation** (`POST /auth/logout`), dan **snapshot kelas
-pada sesi presensi** sehingga rekap per kelas akurat walau murid pindah kelas.
+**scope guru** (hanya kelas/jadwal/murid yang diampu), verifikasi user
+aktif/role tiap request, sesi presensi idempoten, notifikasi anti-duplikat,
+penanganan error DB yang ramah, batas pagination, **rate limiting**
+(100/menit, login 10/menit), **audit log** seluruh mutasi, **refresh token
+dengan rotasi & revocation** (`POST /auth/logout`), **snapshot kelas** pada
+sesi presensi, **pengumuman** admin (`POST /notifications/broadcast`),
+deteksi **"kelas belum diabsen"** (`GET /attendance/unmarked`), dan
+pembersihan otomatis **push token** yang tak terdaftar lagi.
+
+Fitur sekunder yang sengaja ditangguhkan (nilai rendah / effort besar,
+dapat ditambah kemudian):
+
+- **Template notifikasi + pengaturan sekolah** (kanal aktif, jam reminder,
+  status mana yang dinotif) — saat ini hardcoded ke Sakit/Izin/Alpha.
+- **Rekap mingguan via email** (ditandai opsional di rencana).
+- **Retry queue** pengiriman notifikasi (saat ini best-effort + token mati
+  dibersihkan otomatis).
+- **Grafik tren** time-series penuh (kini ada bar proporsi ringkas di UI).
+- **shadcn/ui** (dipakai komponen Tailwind sendiri, fungsional setara).
 
 Cara kerja refresh token: setiap login/refresh menyimpan hash (sha256) token
 di tabel `refresh_tokens` dengan `jti`. Saat refresh, token lama dicabut

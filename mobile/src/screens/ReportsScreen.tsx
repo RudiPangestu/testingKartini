@@ -69,6 +69,13 @@ export default function ReportsScreen() {
               {report.data.range.start} → {report.data.range.end}
             </Text>
           )}
+          <ProportionBar
+            hadir={report.data.hadir}
+            sakit={report.data.sakit}
+            izin={report.data.izin}
+            alpha={report.data.alpha}
+            total={report.data.total}
+          />
           <View style={styles.row}>
             <Metric label="Hadir Efektif" value={`${report.data.hadirEfektifPct}%`} color={colors.green} />
             <Metric label="Kehadiran Sah" value={`${report.data.kehadiranSahPct}%`} color={colors.brand} />
@@ -91,6 +98,38 @@ export default function ReportsScreen() {
         <Empty message="Belum ada data." />
       )}
     </ScrollView>
+  );
+}
+
+// Bar proporsi Hadir/Sakit/Izin/Alpha (tanpa library chart).
+function ProportionBar(props: {
+  hadir: number;
+  sakit: number;
+  izin: number;
+  alpha: number;
+  total: number;
+}) {
+  if (props.total === 0) return null;
+  const seg = [
+    { v: props.hadir, c: colors.green },
+    { v: props.sakit, c: colors.yellow },
+    { v: props.izin, c: colors.blue },
+    { v: props.alpha, c: colors.red },
+  ].filter((s) => s.v > 0);
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        height: 14,
+        borderRadius: 999,
+        overflow: 'hidden',
+        marginBottom: 12,
+      }}
+    >
+      {seg.map((s, i) => (
+        <View key={i} style={{ flex: s.v, backgroundColor: s.c }} />
+      ))}
+    </View>
   );
 }
 

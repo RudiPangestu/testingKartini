@@ -7,7 +7,9 @@ import {
 import {
   AttendanceSource,
   AttendanceStatus,
+  DayOfWeek,
   Prisma,
+  Role,
   TermType,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -117,6 +119,57 @@ export class AttendanceService {
       include: SESSION_INCLUDE,
       orderBy: { sessionDate: 'desc' },
     });
+  }
+
+  // Pemetaan getUTCDay() (1=Sen..6=Sab) -> enum DayOfWeek (sekolah Senin–Sabtu).
+  private static readonly DOW: Record<number, DayOfWeek | undefined> = {
+    1: DayOfWeek.SEN,
+    2: DayOfWeek.SEL,
+    3: DayOfWeek.RAB,
+    4: DayOfWeek.KAM,
+    5: DayOfWeek.JUM,
+    6: DayOfWeek.SAB,
+  };
+
+  /**
+   * Jadwal yang BELUM diabsen pada suatu tanggal: jadwal pada hari tsb yang
+   * belum punya sesi presensi dengan minimal satu record. Guru hanya melihat
+   * jadwal yang ia ampu.
+   */
+  async findUnmarked(dateStr: string, user: JwtUser) {
+    const date = new Date(dateStr);
+    const day = AttendanceService.DOW[date.getUTCDay()];
+    if (!day) return []; // Minggu: tidak ada jadwal
+
+    const schedules = await this.prisma.schedule.findMany({
+      where: {
+        dayOfWeek: day,
+        ...(user.role === Role.GURU ? { teacherId: user.userId } : {}),
+      },
+      include: {
+        subject: { select: { name: true } },
+        class: { select: { id: true, name: true } },
+        teacher: { select: { id: true, fullName: true } },
+      },
+      orderBy: { startTime: 'asc' },
+    });
+    if (schedules.length === 0) return [];
+
+    const sessions = await this.prisma.attendanceSession.findMany({
+      where: {
+        sessionDate: date,
+        sourceType: AttendanceSource.SCHEDULE,
+        scheduleId: { in: schedules.map((s) => s.id) },
+      },
+      select: { scheduleId: true, _count: { select: { records: true } } },
+    });
+    const recorded = new Set(
+      sessions
+        .filter((s) => s._count.records > 0)
+        .map((s) => s.scheduleId),
+    );
+
+    return schedules.filter((s) => !recorded.has(s.id));
   }
 
   async findSession(id: string) {

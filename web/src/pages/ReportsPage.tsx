@@ -37,6 +37,7 @@ function ResultView({ data }: { data: ReportResult }) {
           Periode: {data.range.start} → {data.range.end}
         </div>
       )}
+      <ProportionBar data={data} />
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Metric
           label="Hadir Efektif"
@@ -56,6 +57,39 @@ function ResultView({ data }: { data: ReportResult }) {
         <Metric label="Sakit" value={data.sakit} color="text-yellow-600" />
         <Metric label="Izin" value={data.izin} color="text-blue-600" />
         <Metric label="Alpha" value={data.alpha} color="text-red-600" />
+      </div>
+    </div>
+  );
+}
+
+// Bar proporsi Hadir/Sakit/Izin/Alpha (visualisasi ringan tanpa library).
+function ProportionBar({ data }: { data: ReportResult }) {
+  if (data.total === 0) return null;
+  const seg = [
+    { v: data.hadir, c: 'bg-green-500', label: 'Hadir' },
+    { v: data.sakit, c: 'bg-yellow-500', label: 'Sakit' },
+    { v: data.izin, c: 'bg-blue-500', label: 'Izin' },
+    { v: data.alpha, c: 'bg-red-500', label: 'Alpha' },
+  ].filter((s) => s.v > 0);
+  return (
+    <div>
+      <div className="flex h-4 w-full overflow-hidden rounded-full">
+        {seg.map((s) => (
+          <div
+            key={s.label}
+            className={s.c}
+            style={{ width: `${(s.v / data.total) * 100}%` }}
+            title={`${s.label}: ${s.v}`}
+          />
+        ))}
+      </div>
+      <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-500">
+        {seg.map((s) => (
+          <span key={s.label} className="flex items-center gap-1">
+            <span className={`inline-block h-2 w-2 rounded-full ${s.c}`} />
+            {s.label} ({s.v})
+          </span>
+        ))}
       </div>
     </div>
   );

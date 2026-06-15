@@ -32,7 +32,13 @@ export class ReportsService {
       session: this.sessionDateFilter(range),
     };
     const breakdown = await this.aggregate(where);
-    return { scope: 'general', period, range: this.rangeLabel(range), ...breakdown };
+    return {
+      scope: 'general',
+      period,
+      range: this.rangeLabel(range),
+      totalRecords: breakdown.total, // alias sesuai dokumentasi API
+      ...breakdown,
+    };
   }
 
   // ---------- LAPORAN INDIVIDUAL ----------
@@ -63,6 +69,7 @@ export class ReportsService {
       studentName: student.fullName,
       period,
       range: this.rangeLabel(range),
+      totalSessions: breakdown.total, // alias sesuai dokumentasi API
       ...breakdown,
     };
   }

@@ -42,6 +42,11 @@ export default function DashboardPage() {
     queryFn: async () =>
       (await api.get<Paginated<Student>>('/students?limit=1')).data.meta.total,
   });
+  const unmarked = useQuery({
+    queryKey: ['unmarked-today'],
+    queryFn: async () =>
+      (await api.get<unknown[]>('/attendance/unmarked')).data.length,
+  });
 
   return (
     <div>
@@ -58,6 +63,14 @@ export default function DashboardPage() {
           color="text-green-600"
           hint="Hanya status HADIR"
         />
+        <StatCard
+          label="Belum diabsen hari ini"
+          value={unmarked.data ?? '—'}
+          color={unmarked.data ? 'text-amber-600' : 'text-green-600'}
+          hint="Jadwal tanpa presensi"
+        />
+      </div>
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Alpha (bln ini)"
           value={report.data ? `${report.data.alphaPct}%` : '—'}

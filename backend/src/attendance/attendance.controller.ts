@@ -34,6 +34,16 @@ export class AttendanceController {
     return this.service.findSessions(query);
   }
 
+  // Jadwal yang belum diabsen pada suatu tanggal (default hari ini)
+  @Roles(Role.ADMIN, Role.GURU)
+  @Get('unmarked')
+  findUnmarked(@CurrentUser() user: JwtUser, @Query('date') date?: string) {
+    return this.service.findUnmarked(
+      date ?? new Date().toISOString().slice(0, 10),
+      user,
+    );
+  }
+
   @Roles(Role.ADMIN, Role.GURU)
   @Get('sessions/:id')
   findSession(@Param('id') id: string) {
