@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
 import { QueryScheduleDto } from './dto/query-schedule.dto';
+import { JwtUser } from '../common/decorators/current-user.decorator';
 
 const INCLUDE = {
   subject: { select: { id: true, name: true } },
@@ -15,11 +16,13 @@ const INCLUDE = {
 export class SchedulesService {
   constructor(private prisma: PrismaService) {}
 
-  findAll(query: QueryScheduleDto) {
+  findAll(query: QueryScheduleDto, user?: JwtUser) {
     const where: Prisma.ScheduleWhereInput = {
       ...(query.classId ? { classId: query.classId } : {}),
       ...(query.teacherId ? { teacherId: query.teacherId } : {}),
       ...(query.day ? { dayOfWeek: query.day } : {}),
+      // Guru hanya melihat jadwal yang ia ampu.
+      ...(user?.role === Role.GURU ? { teacherId: user.userId } : {}),
     };
     return this.prisma.schedule.findMany({
       where,

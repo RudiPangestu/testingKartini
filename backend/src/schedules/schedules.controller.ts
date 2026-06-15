@@ -14,6 +14,10 @@ import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
 import { QueryScheduleDto } from './dto/query-schedule.dto';
 import { Roles } from '../common/decorators/roles.decorator';
+import {
+  CurrentUser,
+  JwtUser,
+} from '../common/decorators/current-user.decorator';
 
 @Controller('schedules')
 export class SchedulesController {
@@ -21,8 +25,8 @@ export class SchedulesController {
 
   @Roles(Role.ADMIN, Role.GURU)
   @Get()
-  findAll(@Query() query: QueryScheduleDto) {
-    return this.service.findAll(query);
+  findAll(@Query() query: QueryScheduleDto, @CurrentUser() user: JwtUser) {
+    return this.service.findAll(query, user);
   }
 
   @Roles(Role.ADMIN, Role.GURU)

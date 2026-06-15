@@ -13,6 +13,7 @@ import EventsPage from './pages/EventsPage';
 import TermsPage from './pages/TermsPage';
 import AttendancePage from './pages/AttendancePage';
 import ReportsPage from './pages/ReportsPage';
+import AnnouncementsPage from './pages/AnnouncementsPage';
 import type { ReactElement } from 'react';
 
 function Protected({
@@ -80,6 +81,14 @@ export default function App() {
           element={
             <Protected roles={['ADMIN']}>
               <TermsPage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/announcements"
+          element={
+            <Protected roles={['ADMIN']}>
+              <AnnouncementsPage />
             </Protected>
           }
         />

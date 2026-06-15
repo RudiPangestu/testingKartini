@@ -25,7 +25,7 @@ export class AttendanceController {
   @Roles(Role.ADMIN, Role.GURU)
   @Post('sessions')
   createSession(@Body() dto: CreateSessionDto, @CurrentUser() user: JwtUser) {
-    return this.service.createSession(dto, user.userId);
+    return this.service.createSession(dto, user);
   }
 
   @Roles(Role.ADMIN, Role.GURU)

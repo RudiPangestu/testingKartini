@@ -19,6 +19,7 @@ describe('SIPRES Kartini API (e2e)', () => {
   let classId: string;
   let studentId: string;
   let sessionId: string;
+  let teacherEmail: string;
 
   // Email unik per run agar test idempoten terhadap DB yang persisten.
   const ADMIN = {
@@ -147,13 +148,14 @@ describe('SIPRES Kartini API (e2e)', () => {
       .set(auth)
       .send({ name: 'E2E IPA' })
       .expect(201);
+    teacherEmail = `e2e-guru-${Date.now()}@mail.com`;
     const teacher = await http()
       .post('/api/v1/users')
       .set(auth)
       .send({
         role: 'GURU',
         fullName: 'E2E Guru',
-        email: `e2e-guru-${Date.now()}@mail.com`,
+        email: teacherEmail,
         password: 'guru12345',
       })
       .expect(201);
@@ -245,6 +247,47 @@ describe('SIPRES Kartini API (e2e)', () => {
     const after = (await http().get('/api/v1/notifications').set(headers)).body
       .length;
     expect(after).toBe(before);
+  });
+
+  it('scope guru: guru hanya akses murid pada kelas yang diampu', async () => {
+    // Guru E2E mengajar `classId` (jadwal dibuat pada test sebelumnya).
+    const login = await http()
+      .post('/api/v1/auth/login')
+      .send({ email: teacherEmail, password: 'guru12345' })
+      .expect(200);
+    const gtoken = { Authorization: `Bearer ${login.body.accessToken}` };
+
+    // Murid di kelas yang diampu -> boleh
+    await http()
+      .get(`/api/v1/reports/student/${studentId}?period=semester`)
+      .set(gtoken)
+      .expect(200);
+
+    // Murid tanpa kelas (tidak diampu) -> 403
+    const outsider = await http()
+      .post('/api/v1/students')
+      .set({ Authorization: `Bearer ${token}` })
+      .send({ nisn: `e2e-out-${Date.now()}`, fullName: 'Murid Luar' })
+      .expect(201);
+    await http()
+      .get(`/api/v1/students/${outsider.body.id}`)
+      .set(gtoken)
+      .expect(403);
+  });
+
+  it('pengumuman: admin broadcast ke ORTU masuk inbox ortu', async () => {
+    const before = (await http().get('/api/v1/notifications').set({ Authorization: `Bearer ${ortuToken}` })).body.length;
+
+    const res = await http()
+      .post('/api/v1/notifications/broadcast')
+      .set({ Authorization: `Bearer ${token}` })
+      .send({ title: 'Libur', body: 'Sekolah libur besok', target: 'ROLE', role: 'ORTU' })
+      .expect(201);
+    expect(res.body.recipients).toBeGreaterThanOrEqual(1);
+
+    const after = (await http().get('/api/v1/notifications').set({ Authorization: `Bearer ${ortuToken}` })).body;
+    expect(after.length).toBe(before + 1);
+    expect(after[0].title).toBe('Libur');
   });
 
   it('laporan individual: Sakit dihitung Kehadiran Sah, bukan Alpha', async () => {

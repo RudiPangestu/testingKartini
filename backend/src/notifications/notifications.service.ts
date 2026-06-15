@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationType, Platform } from '@prisma/client';
+import { NotificationType, Platform, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from './channels/push.service';
 import { EmailService } from './channels/email.service';
@@ -85,5 +85,63 @@ export class NotificationsService {
     await Promise.all(
       links.map((l) => this.notifyUser(l.parentUserId, payload)),
     );
+  }
+
+  /**
+   * Pengumuman/Info dari admin ke audiens tertentu:
+   * - ALL: seluruh user aktif
+   * - ROLE: user aktif dengan role tertentu
+   * - CLASS: orang tua + akun murid pada satu kelas
+   */
+  async broadcast(dto: {
+    title: string;
+    body: string;
+    target: 'ALL' | 'ROLE' | 'CLASS';
+    role?: Role;
+    classId?: string;
+  }) {
+    const userIds = await this.resolveAudience(dto);
+    const payload: NotifyPayload = {
+      type: 'INFO',
+      title: dto.title,
+      body: dto.body,
+    };
+    await Promise.all([...userIds].map((id) => this.notifyUser(id, payload)));
+    return { recipients: userIds.size };
+  }
+
+  private async resolveAudience(dto: {
+    target: 'ALL' | 'ROLE' | 'CLASS';
+    role?: Role;
+    classId?: string;
+  }): Promise<Set<string>> {
+    const ids = new Set<string>();
+
+    if (dto.target === 'ALL') {
+      const users = await this.prisma.user.findMany({
+        where: { isActive: true },
+        select: { id: true },
+      });
+      users.forEach((u) => ids.add(u.id));
+    } else if (dto.target === 'ROLE' && dto.role) {
+      const users = await this.prisma.user.findMany({
+        where: { isActive: true, role: dto.role },
+        select: { id: true },
+      });
+      users.forEach((u) => ids.add(u.id));
+    } else if (dto.target === 'CLASS' && dto.classId) {
+      const students = await this.prisma.student.findMany({
+        where: { classId: dto.classId },
+        select: {
+          userId: true,
+          parents: { select: { parentUserId: true } },
+        },
+      });
+      for (const s of students) {
+        if (s.userId) ids.add(s.userId);
+        s.parents.forEach((p) => ids.add(p.parentUserId));
+      }
+    }
+    return ids;
   }
 }

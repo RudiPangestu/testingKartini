@@ -3,6 +3,7 @@ import { AttendanceStatus, Prisma, TermType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtUser } from '../common/decorators/current-user.decorator';
 import { assertStudentAccess } from '../common/student-access';
+import { assertTeacherManagesClass } from '../common/teacher-scope';
 
 interface DateRange {
   start: Date;
@@ -67,7 +68,16 @@ export class ReportsService {
   }
 
   // ---------- REKAP PER KELAS ----------
-  async byClass(classId: string, period: string, date?: string, termId?: string) {
+  async byClass(
+    classId: string,
+    period: string,
+    date?: string,
+    termId?: string,
+    requester?: JwtUser,
+  ) {
+    if (requester && requester.role === 'GURU') {
+      await assertTeacherManagesClass(this.prisma, requester.userId, classId);
+    }
     const range = await this.resolveRange(period, date, termId);
     // Pakai snapshot kelas pada sesi (bukan kelas murid saat ini) agar rekap
     // historis tetap akurat meski murid sudah pindah kelas.

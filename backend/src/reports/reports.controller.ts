@@ -38,10 +38,11 @@ export class ReportsController {
   @Get('class/:classId')
   byClass(
     @Param('classId') classId: string,
+    @CurrentUser() user: JwtUser,
     @Query('period') period = 'month',
     @Query('date') date?: string,
     @Query('termId') termId?: string,
   ) {
-    return this.service.byClass(classId, period, date, termId);
+    return this.service.byClass(classId, period, date, termId, user);
   }
 }

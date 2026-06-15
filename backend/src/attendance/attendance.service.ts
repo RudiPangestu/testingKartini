@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -46,8 +47,9 @@ export class AttendanceService {
     private notifications: NotificationsService,
   ) {}
 
-  async createSession(dto: CreateSessionDto, userId: string) {
+  async createSession(dto: CreateSessionDto, user: JwtUser) {
     const sessionDate = new Date(dto.sessionDate);
+    const userId = user.userId;
 
     // Tentukan snapshot kelas untuk sesi ini (akurasi laporan historis).
     let classId: string | null = null;
@@ -57,6 +59,12 @@ export class AttendanceService {
         where: { id: dto.scheduleId },
       });
       if (!schedule) throw new BadRequestException('Jadwal tidak ditemukan');
+      // Guru hanya boleh membuka sesi untuk jadwal yang ia ajar.
+      if (user.role === 'GURU' && schedule.teacherId !== userId) {
+        throw new ForbiddenException(
+          'Guru hanya dapat presensi pada jadwal yang diampu',
+        );
+      }
       classId = schedule.classId;
     } else {
       if (!dto.eventId) throw new BadRequestException('eventId wajib diisi');

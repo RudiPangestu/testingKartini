@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { AuditInterceptor } from './common/audit/audit.interceptor';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -19,6 +22,8 @@ import { SchedulerModule } from './scheduler/scheduler.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
+    // Rate limiting global: maks 100 request / menit / IP (default).
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -32,6 +37,12 @@ import { SchedulerModule } from './scheduler/scheduler.module';
     AttendanceModule,
     ReportsModule,
     SchedulerModule,
+  ],
+  providers: [
+    // Rate limiting di seluruh endpoint
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // Audit log untuk semua operasi mutasi
+    { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
   ],
 })
 export class AppModule {}

@@ -131,10 +131,22 @@ Contoh respons `/reports/student/:studentId?period=semester&termId=...`:
 |--------|----------|------|-----------|
 | GET | `/notifications` | semua | Inbox notifikasi pengguna |
 | PATCH | `/notifications/:id/read` | semua | Tandai dibaca |
+| POST | `/notifications/broadcast` | ADMIN | Pengumuman/Info ke audiens (`target=ALL\|ROLE\|CLASS`) |
+
+Body `POST /notifications/broadcast`:
+
+```json
+{ "title": "Libur", "body": "Sekolah libur besok", "target": "ROLE", "role": "ORTU" }
+```
 
 ## 11. Konvensi Umum
 
 - **Pagination**: `?page=1&limit=20` → respons `{ data, meta: { total, page, limit } }`.
+  `page`/`limit` divalidasi (limit maks 500).
 - **Error format**: `{ statusCode, message, error }`.
-- **Validasi**: 400 untuk input invalid, 401 unauth, 403 forbidden (role), 404 not found.
+- **Validasi**: 400 input invalid, 401 unauth, 403 forbidden (role/kepemilikan),
+  404 not found, 409 konflik (mis. data masih direferensikan).
+- **Rate limiting**: maks 100 req/menit/IP (login 10/menit). Lebih → 429.
+- **Audit log**: setiap operasi mutasi (POST/PATCH/PUT/DELETE) dicatat ke
+  `audit_logs` (actor, aksi, entitas, perubahan).
 - **Tanggal**: ISO 8601 (`YYYY-MM-DD`, `HH:mm`).

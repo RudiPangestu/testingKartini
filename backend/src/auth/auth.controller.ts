@@ -1,4 +1,5 @@
 import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
@@ -12,6 +13,8 @@ import {
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  // Lebih ketat untuk cegah brute-force: maks 10 percobaan / menit / IP.
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Public()
   @Post('login')
   @HttpCode(200)
