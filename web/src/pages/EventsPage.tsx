@@ -91,7 +91,7 @@ export default function EventsPage() {
         ) : !list.data?.length ? (
           <EmptyState message="Belum ada kegiatan." />
         ) : (
-          <table className="w-full text-sm">
+          <table className="table">
             <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
               <tr>
                 <th className="px-4 py-3">Tanggal</th>
@@ -116,7 +116,7 @@ export default function EventsPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <button
-                      className="mr-2 text-brand-600 hover:underline"
+                      className="action-btn action-edit"
                       onClick={() => {
                         setForm({
                           id: ev.id,
@@ -134,7 +134,7 @@ export default function EventsPage() {
                       Edit
                     </button>
                     <button
-                      className="text-red-600 hover:underline"
+                      className="action-btn action-danger"
                       onClick={() => {
                         if (confirm(`Hapus ${ev.title}?`)) remove.mutate(ev.id);
                       }}

@@ -138,7 +138,7 @@ export default function StudentsPage() {
         ) : !list.data?.data.length ? (
           <EmptyState message="Belum ada murid." />
         ) : (
-          <table className="w-full text-sm">
+          <table className="table">
             <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
               <tr>
                 <th className="px-4 py-3">NISN</th>
@@ -159,7 +159,7 @@ export default function StudentsPage() {
                     {isAdmin && (
                       <>
                         <button
-                          className="mr-2 text-gray-600 hover:underline"
+                          className="action-btn action-muted"
                           onClick={() => {
                             setLinkFor(s);
                             setParentId('');
@@ -168,7 +168,7 @@ export default function StudentsPage() {
                           Tautkan Ortu
                         </button>
                         <button
-                          className="mr-2 text-brand-600 hover:underline"
+                          className="action-btn action-edit"
                           onClick={() => {
                             setForm({
                               id: s.id,
@@ -184,7 +184,7 @@ export default function StudentsPage() {
                           Edit
                         </button>
                         <button
-                          className="text-red-600 hover:underline"
+                          className="action-btn action-danger"
                           onClick={() => {
                             if (confirm(`Hapus ${s.fullName}?`)) remove.mutate(s.id);
                           }}

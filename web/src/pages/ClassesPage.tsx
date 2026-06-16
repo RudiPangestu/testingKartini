@@ -96,7 +96,7 @@ export default function ClassesPage() {
         ) : !list.data?.data.length ? (
           <EmptyState message="Belum ada kelas." />
         ) : (
-          <table className="w-full text-sm">
+          <table className="table">
             <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
               <tr>
                 <th className="px-4 py-3">Nama</th>
@@ -119,7 +119,7 @@ export default function ClassesPage() {
                   <td className="px-4 py-3">{c._count?.students ?? 0}</td>
                   <td className="px-4 py-3 text-right">
                     <button
-                      className="mr-2 text-gray-600 hover:underline"
+                      className="action-btn action-muted"
                       onClick={() => setViewClass(c)}
                     >
                       Lihat Murid
@@ -127,7 +127,7 @@ export default function ClassesPage() {
                     {isAdmin && (
                       <>
                         <button
-                          className="mr-2 text-brand-600 hover:underline"
+                          className="action-btn action-edit"
                           onClick={() => {
                             setForm({
                               id: c.id,
@@ -142,7 +142,7 @@ export default function ClassesPage() {
                           Edit
                         </button>
                         <button
-                          className="text-red-600 hover:underline"
+                          className="action-btn action-danger"
                           onClick={() => {
                             if (confirm(`Hapus kelas ${c.name}?`)) remove.mutate(c.id);
                           }}

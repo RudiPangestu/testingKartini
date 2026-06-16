@@ -177,7 +177,7 @@ export default function AttendancePage() {
           {roster.length === 0 ? (
             <EmptyState message="Kelas ini belum punya murid." />
           ) : (
-            <table className="w-full text-sm">
+            <table className="table">
               <thead className="text-left text-xs uppercase text-gray-500">
                 <tr>
                   <th className="py-2">Murid</th>

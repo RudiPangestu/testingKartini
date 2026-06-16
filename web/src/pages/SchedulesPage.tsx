@@ -105,7 +105,7 @@ export default function SchedulesPage() {
         ) : !list.data?.length ? (
           <EmptyState message="Belum ada jadwal." />
         ) : (
-          <table className="w-full text-sm">
+          <table className="table">
             <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
               <tr>
                 <th className="px-4 py-3">Hari</th>
@@ -128,7 +128,7 @@ export default function SchedulesPage() {
                   <td className="px-4 py-3 text-gray-500">{s.teacher?.fullName}</td>
                   <td className="px-4 py-3 text-right">
                     <button
-                      className="mr-2 text-brand-600 hover:underline"
+                      className="action-btn action-edit"
                       onClick={() => {
                         setForm({
                           id: s.id,
@@ -146,7 +146,7 @@ export default function SchedulesPage() {
                       Edit
                     </button>
                     <button
-                      className="text-red-600 hover:underline"
+                      className="action-btn action-danger"
                       onClick={() => {
                         if (confirm('Hapus jadwal ini?')) remove.mutate(s.id);
                       }}
