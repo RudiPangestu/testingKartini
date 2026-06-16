@@ -22,7 +22,19 @@ export default function SettingsPage() {
   }, [query.data, form]);
 
   const save = useMutation({
-    mutationFn: (s: Setting) => api.put('/settings', s),
+    // Kirim hanya field yang boleh diubah; backend menolak properti ekstra
+    // (mis. id/createdAt/updatedAt) karena ValidationPipe forbidNonWhitelisted.
+    mutationFn: (s: Setting) =>
+      api.put('/settings', {
+        channelPush: s.channelPush,
+        channelEmail: s.channelEmail,
+        channelWa: s.channelWa,
+        notifyStatuses: s.notifyStatuses,
+        attendanceTemplate: s.attendanceTemplate,
+        reminderTemplate: s.reminderTemplate,
+        reminderHour: s.reminderHour,
+        weeklyRecapEnabled: s.weeklyRecapEnabled,
+      }),
     onSuccess: () => {
       toast.push('success', 'Pengaturan tersimpan');
       qc.invalidateQueries({ queryKey: ['settings'] });

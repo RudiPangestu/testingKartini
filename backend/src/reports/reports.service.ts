@@ -1,9 +1,21 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AttendanceStatus, Prisma, TermType } from '@prisma/client';
+import * as ExcelJS from 'exceljs';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtUser } from '../common/decorators/current-user.decorator';
 import { assertStudentAccess } from '../common/student-access';
-import { assertTeacherManagesClass } from '../common/teacher-scope';
+import {
+  assertTeacherManagesClass,
+  teacherClassIds,
+} from '../common/teacher-scope';
+
+export interface ExportFilter {
+  classId?: string;
+  studentId?: string;
+  start?: string; // YYYY-MM-DD (inklusif)
+  end?: string; // YYYY-MM-DD (inklusif)
+  status?: AttendanceStatus;
+}
 
 interface DateRange {
   start: Date;
@@ -146,6 +158,134 @@ export class ReportsService {
         total: c.HADIR + c.SAKIT + c.IZIN + c.ALPHA,
       })),
     };
+  }
+
+  // ---------- EXPORT EXCEL (rekap absensi terfilter) ----------
+  /**
+   * Bangun file .xlsx berisi baris-baris presensi sesuai filter.
+   * Filter: rentang tanggal (start/end), kelas, murid, status.
+   * Scope: GURU dibatasi pada kelas yang diampu; ORTU/MURID tidak dipakai
+   * di sini (endpoint hanya untuk ADMIN/GURU).
+   */
+  async exportXlsx(filter: ExportFilter, requester?: JwtUser): Promise<Buffer> {
+    const where: Prisma.AttendanceWhereInput = {};
+
+    // Rentang tanggal (end inklusif -> dibuat eksklusif +1 hari)
+    const sessionFilter: Prisma.AttendanceSessionWhereInput = {};
+    if (filter.start || filter.end) {
+      const dateRange: Prisma.DateTimeFilter = {};
+      if (filter.start) dateRange.gte = this.atMidnight(new Date(filter.start));
+      if (filter.end)
+        dateRange.lt = this.addDays(this.atMidnight(new Date(filter.end)), 1);
+      sessionFilter.sessionDate = dateRange;
+    }
+
+    if (filter.status) where.status = filter.status;
+
+    if (filter.studentId) {
+      if (requester) {
+        await assertStudentAccess(this.prisma, requester, filter.studentId);
+      }
+      where.studentId = filter.studentId;
+    }
+
+    if (filter.classId) {
+      if (requester?.role === 'GURU') {
+        await assertTeacherManagesClass(
+          this.prisma,
+          requester.userId,
+          filter.classId,
+        );
+      }
+      sessionFilter.classId = filter.classId;
+    } else if (requester?.role === 'GURU') {
+      // Guru tanpa filter kelas: batasi ke kelas yang ia ampu.
+      const ids = await teacherClassIds(this.prisma, requester.userId);
+      sessionFilter.classId = { in: ids.length ? ids : ['__none__'] };
+    }
+
+    if (Object.keys(sessionFilter).length) where.session = sessionFilter;
+
+    const rows = await this.prisma.attendance.findMany({
+      where,
+      orderBy: [{ session: { sessionDate: 'asc' } }, { studentId: 'asc' }],
+      select: {
+        status: true,
+        note: true,
+        recordedAt: true,
+        student: {
+          select: { nisn: true, nis: true, fullName: true },
+        },
+        recordedBy: { select: { fullName: true } },
+        session: {
+          select: {
+            sessionDate: true,
+            sourceType: true,
+            class: { select: { name: true } },
+            schedule: { select: { subject: { select: { name: true } } } },
+            event: { select: { title: true } },
+          },
+        },
+      },
+    });
+
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'SIPRES Kartini';
+    wb.created = new Date();
+    const ws = wb.addWorksheet('Absensi');
+
+    ws.columns = [
+      { header: 'No', key: 'no', width: 6 },
+      { header: 'Tanggal', key: 'tanggal', width: 13 },
+      { header: 'NISN', key: 'nisn', width: 16 },
+      { header: 'Nama Murid', key: 'nama', width: 26 },
+      { header: 'Kelas', key: 'kelas', width: 12 },
+      { header: 'Konteks', key: 'konteks', width: 24 },
+      { header: 'Status', key: 'status', width: 10 },
+      { header: 'Catatan', key: 'catatan', width: 24 },
+      { header: 'Dicatat oleh', key: 'oleh', width: 22 },
+    ];
+    ws.getRow(1).font = { bold: true };
+    ws.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF1E3A8A' },
+    };
+    ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+
+    rows.forEach((r, i) => {
+      const konteks =
+        r.session.sourceType === 'SCHEDULE'
+          ? r.session.schedule?.subject?.name || 'Jadwal'
+          : r.session.event?.title || 'Kegiatan';
+      ws.addRow({
+        no: i + 1,
+        tanggal: r.session.sessionDate.toISOString().slice(0, 10),
+        nisn: r.student.nisn,
+        nama: r.student.fullName,
+        kelas: r.session.class?.name || '-',
+        konteks,
+        status: r.status,
+        catatan: r.note || '',
+        oleh: r.recordedBy.fullName,
+      });
+    });
+
+    // Baris ringkasan
+    const count = (s: AttendanceStatus) =>
+      rows.filter((r) => r.status === s).length;
+    ws.addRow({});
+    const sum = ws.addRow({
+      nama: 'RINGKASAN',
+      kelas: `Total: ${rows.length}`,
+      konteks: `Hadir: ${count('HADIR')}  Sakit: ${count('SAKIT')}`,
+      status: `Izin: ${count('IZIN')}`,
+      catatan: `Alpha: ${count('ALPHA')}`,
+    });
+    sum.font = { bold: true };
+
+    const buffer = await wb.xlsx.writeBuffer();
+    return Buffer.from(buffer);
   }
 
   // ---------- HELPER ----------

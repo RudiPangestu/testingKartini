@@ -1,5 +1,6 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Controller, Get, Param, Query, Res } from '@nestjs/common';
+import { AttendanceStatus, Role } from '@prisma/client';
+import { Response } from 'express';
 import { ReportsService } from './reports.service';
 import { Roles } from '../common/decorators/roles.decorator';
 import {
@@ -47,6 +48,33 @@ export class ReportsController {
       { studentId, classId, days: days ? Number(days) : undefined },
       user,
     );
+  }
+
+  // Export rekap absensi ke Excel (.xlsx) sesuai filter.
+  // Query: classId, studentId, start, end (YYYY-MM-DD), status.
+  @Roles(Role.ADMIN, Role.GURU)
+  @Get('export')
+  async export(
+    @CurrentUser() user: JwtUser,
+    @Res() res: Response,
+    @Query('classId') classId?: string,
+    @Query('studentId') studentId?: string,
+    @Query('start') start?: string,
+    @Query('end') end?: string,
+    @Query('status') status?: AttendanceStatus,
+  ) {
+    const buffer = await this.service.exportXlsx(
+      { classId, studentId, start, end, status },
+      user,
+    );
+    const stamp = new Date().toISOString().slice(0, 10);
+    res.set({
+      'Content-Type':
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="absensi-${stamp}.xlsx"`,
+      'Content-Length': buffer.length,
+    });
+    res.end(buffer);
   }
 
   @Roles(Role.ADMIN, Role.GURU)

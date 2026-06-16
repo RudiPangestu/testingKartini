@@ -1,10 +1,16 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
-import { createHash, randomUUID } from 'crypto';
+import { createHash, randomBytes, randomUUID } from 'crypto';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../notifications/channels/email.service';
 import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 
 function sha256(value: string): string {
   return createHash('sha256').update(value).digest('hex');
@@ -15,19 +21,122 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
+    private email: EmailService,
   ) {}
+
+  /**
+   * Pendaftaran mandiri orang tua/wali. Akun dibuat sebagai ORTU dengan
+   * isActive=false (tidak bisa login) sampai email diverifikasi. Penautan ke
+   * murid dilakukan Admin setelahnya.
+   */
+  async register(dto: RegisterDto) {
+    const existing = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+    if (existing) {
+      throw new BadRequestException('Email sudah terdaftar');
+    }
+
+    const passwordHash = await argon2.hash(dto.password);
+    const user = await this.prisma.user.create({
+      data: {
+        role: Role.ORTU,
+        fullName: dto.fullName,
+        email: dto.email,
+        phone: dto.phone,
+        passwordHash,
+        isActive: false,
+      },
+    });
+
+    await this.sendVerification(user.id, user.email, user.fullName);
+    return {
+      message:
+        'Pendaftaran berhasil. Cek email Anda untuk tautan verifikasi sebelum login.',
+    };
+  }
+
+  /** Verifikasi email via token sekali pakai; aktifkan akun bila valid. */
+  async verifyEmail(token: string) {
+    if (!token) throw new BadRequestException('Token tidak ada');
+    const record = await this.prisma.verificationToken.findFirst({
+      where: { tokenHash: sha256(token) },
+    });
+    if (!record || record.usedAt || record.expiresAt < new Date()) {
+      throw new BadRequestException('Token tidak valid atau kedaluwarsa');
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: record.userId },
+        data: { isActive: true, emailVerifiedAt: new Date() },
+      }),
+      this.prisma.verificationToken.update({
+        where: { id: record.id },
+        data: { usedAt: new Date() },
+      }),
+    ]);
+    return { message: 'Email terverifikasi. Anda sekarang bisa login.' };
+  }
+
+  /** Kirim ulang email verifikasi (tidak membocorkan apakah email terdaftar). */
+  async resendVerification(email: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (user && !user.emailVerifiedAt) {
+      await this.sendVerification(user.id, user.email, user.fullName);
+    }
+    return {
+      message:
+        'Jika email terdaftar & belum diverifikasi, tautan telah dikirim.',
+    };
+  }
+
+  /** Buat token verifikasi baru, simpan hash, dan kirim email berisi tautan. */
+  private async sendVerification(
+    userId: string,
+    toEmail: string,
+    name: string,
+  ) {
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 jam
+    await this.prisma.verificationToken.create({
+      data: { userId, tokenHash: sha256(token), expiresAt },
+    });
+
+    const base = process.env.APP_WEB_URL || 'http://localhost:5173';
+    const link = `${base}/verify-email?token=${token}`;
+    await this.email.send(
+      toEmail,
+      'Verifikasi Email — SIPRES Kartini',
+      `Halo ${name},\n\n` +
+        'Terima kasih telah mendaftar di SIPRES Kartini. Klik tautan berikut ' +
+        'untuk memverifikasi email Anda (berlaku 24 jam):\n\n' +
+        `${link}\n\n` +
+        'Jika Anda tidak merasa mendaftar, abaikan email ini.',
+    );
+  }
 
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
-    if (!user || !user.isActive) {
+    if (!user) {
       throw new UnauthorizedException('Email atau password salah');
     }
 
     const valid = await argon2.verify(user.passwordHash, dto.password);
     if (!valid) {
       throw new UnauthorizedException('Email atau password salah');
+    }
+
+    // Pesan spesifik hanya setelah password benar (tidak membocorkan info).
+    if (!user.isActive) {
+      if (!user.emailVerifiedAt) {
+        throw new UnauthorizedException(
+          'Email belum diverifikasi. Cek email Anda untuk tautan verifikasi.',
+        );
+      }
+      throw new UnauthorizedException('Akun nonaktif. Hubungi admin.');
     }
 
     const tokens = await this.issueTokens(user.id, user.email, user.role);

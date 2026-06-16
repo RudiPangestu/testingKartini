@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '../lib/api';
+import { api, apiError, downloadFile } from '../lib/api';
 import { PageHeader } from '../components/ui';
+import { useToast } from '../components/Toast';
 import { useClasses } from '../lib/hooks';
 import TrendChart from '../components/TrendChart';
 import type { Paginated, ReportResult, Student, Term } from '../lib/types';
@@ -96,6 +97,92 @@ function ProportionBar({ data }: { data: ReportResult }) {
   );
 }
 
+function ExcelExport() {
+  const classes = useClasses();
+  const toast = useToast();
+  const [classId, setClassId] = useState('');
+  const [start, setStart] = useState('');
+  const [end, setEnd] = useState('');
+  const [status, setStatus] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function onDownload() {
+    setLoading(true);
+    try {
+      const p = new URLSearchParams();
+      if (classId) p.set('classId', classId);
+      if (start) p.set('start', start);
+      if (end) p.set('end', end);
+      if (status) p.set('status', status);
+      const qs = p.toString();
+      await downloadFile(
+        `/reports/export${qs ? `?${qs}` : ''}`,
+        `absensi-${new Date().toISOString().slice(0, 10)}.xlsx`,
+      );
+      toast.push('success', 'File Excel terunduh');
+    } catch (e) {
+      toast.push('error', apiError(e));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="card mb-6 flex flex-wrap items-end gap-3">
+      <div>
+        <label className="label">Unduh Excel — Kelas</label>
+        <select
+          className="input"
+          value={classId}
+          onChange={(e) => setClassId(e.target.value)}
+        >
+          <option value="">Semua kelas</option>
+          {classes.data?.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="label">Dari Tanggal</label>
+        <input
+          type="date"
+          className="input"
+          value={start}
+          onChange={(e) => setStart(e.target.value)}
+        />
+      </div>
+      <div>
+        <label className="label">Sampai Tanggal</label>
+        <input
+          type="date"
+          className="input"
+          value={end}
+          onChange={(e) => setEnd(e.target.value)}
+        />
+      </div>
+      <div>
+        <label className="label">Status</label>
+        <select
+          className="input"
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+        >
+          <option value="">Semua status</option>
+          <option value="HADIR">Hadir</option>
+          <option value="SAKIT">Sakit</option>
+          <option value="IZIN">Izin</option>
+          <option value="ALPHA">Alpha</option>
+        </select>
+      </div>
+      <button className="btn-primary" disabled={loading} onClick={onDownload}>
+        {loading ? 'Menyiapkan…' : '⬇ Unduh Excel'}
+      </button>
+    </div>
+  );
+}
+
 export default function ReportsPage() {
   const [tab, setTab] = useState<Tab>('general');
 
@@ -105,6 +192,7 @@ export default function ReportsPage() {
         title="Laporan Kehadiran"
         subtitle="Persentase umum, per kelas, dan individual"
       />
+      <ExcelExport />
       <div className="mb-6 flex gap-2">
         {(
           [

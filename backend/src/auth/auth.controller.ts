@@ -1,8 +1,16 @@
-import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
+import { RegisterDto } from './dto/register.dto';
 import { Public } from '../common/decorators/public.decorator';
 import {
   CurrentUser,
@@ -20,6 +28,29 @@ export class AuthController {
   @HttpCode(200)
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  // Pendaftaran mandiri ortu (maks 5 / menit / IP untuk cegah spam).
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Public()
+  @Post('register')
+  @HttpCode(201)
+  register(@Body() dto: RegisterDto) {
+    return this.authService.register(dto);
+  }
+
+  @Public()
+  @Get('verify-email')
+  verifyEmail(@Query('token') token: string) {
+    return this.authService.verifyEmail(token);
+  }
+
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @Public()
+  @Post('resend-verification')
+  @HttpCode(200)
+  resendVerification(@Body('email') email: string) {
+    return this.authService.resendVerification(email);
   }
 
   @Public()

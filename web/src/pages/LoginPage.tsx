@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api, apiError } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import type { AuthResponse } from '../lib/types';
@@ -72,6 +72,12 @@ export default function LoginPage() {
           <button type="submit" className="btn-primary w-full" disabled={loading}>
             {loading ? 'Memproses…' : 'Masuk'}
           </button>
+          <p className="text-center text-sm text-gray-500">
+            Orang tua/wali baru?{' '}
+            <Link to="/register" className="text-brand-600 hover:underline">
+              Daftar di sini
+            </Link>
+          </p>
         </form>
       </div>
     </div>

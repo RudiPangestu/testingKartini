@@ -78,6 +78,8 @@ model User {
   phone        String?
   passwordHash String   @map("password_hash")
   isActive     Boolean  @default(true) @map("is_active")
+  // Null = email belum diverifikasi (akun hasil pendaftaran mandiri).
+  emailVerifiedAt DateTime? @map("email_verified_at")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
@@ -93,9 +95,25 @@ model User {
   notifications       Notification[]
   auditLogs           AuditLog[]
   refreshTokens       RefreshToken[]
+  verificationTokens  VerificationToken[]
 
   @@index([role])
   @@map("users")
+}
+
+// Token verifikasi email untuk pendaftaran mandiri (sekali pakai).
+model VerificationToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @map("token_hash") // sha256 dari token (bukan token mentah)
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("verification_tokens")
 }
 
 // ===================== KELAS =====================

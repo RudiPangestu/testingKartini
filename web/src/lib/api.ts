@@ -65,6 +65,19 @@ api.interceptors.response.use(
   },
 );
 
+// Unduh file biner (mis. Excel) lewat axios (memakai auth + refresh token).
+export async function downloadFile(url: string, filename: string): Promise<void> {
+  const res = await api.get(url, { responseType: 'blob' });
+  const blobUrl = URL.createObjectURL(res.data as Blob);
+  const a = document.createElement('a');
+  a.href = blobUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(blobUrl);
+}
+
 // Helper untuk pesan error backend
 export function apiError(err: unknown): string {
   if (axios.isAxiosError(err)) {

@@ -3,6 +3,8 @@ import { useAuth } from './lib/auth';
 import type { Role } from './lib/types';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 import DashboardPage from './pages/DashboardPage';
 import UsersPage from './pages/UsersPage';
 import ClassesPage from './pages/ClassesPage';
@@ -41,6 +43,11 @@ export default function App() {
         path="/login"
         element={user ? <Navigate to="/" replace /> : <LoginPage />}
       />
+      <Route
+        path="/register"
+        element={user ? <Navigate to="/" replace /> : <RegisterPage />}
+      />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route
         element={
           <Protected>

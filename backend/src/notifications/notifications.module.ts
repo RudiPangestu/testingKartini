@@ -11,6 +11,6 @@ import { WaService } from './channels/wa.service';
 @Module({
   controllers: [NotificationsController, PushTokenController],
   providers: [NotificationsService, PushService, EmailService, WaService],
-  exports: [NotificationsService],
+  exports: [NotificationsService, EmailService],
 })
 export class NotificationsModule {}

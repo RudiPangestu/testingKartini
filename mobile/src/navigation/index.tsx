@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '../lib/auth';
 import { colors } from '../lib/theme';
 import LoginScreen from '../screens/LoginScreen';
+import RegisterScreen from '../screens/RegisterScreen';
 import HomeScreen from '../screens/HomeScreen';
 import ReportsScreen from '../screens/ReportsScreen';
 import EventsScreen from '../screens/EventsScreen';
@@ -115,7 +116,19 @@ export default function RootNavigator() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!user ? (
-          <Stack.Screen name="Login" component={LoginScreen} />
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen
+              name="Register"
+              component={RegisterScreen}
+              options={{
+                headerShown: true,
+                title: 'Daftar',
+                headerStyle: { backgroundColor: colors.brand },
+                headerTintColor: '#fff',
+              }}
+            />
+          </>
         ) : user.role === 'GURU' ? (
           <Stack.Screen name="GuruRoot" component={GuruTabs} />
         ) : user.role === 'ADMIN' ? (
