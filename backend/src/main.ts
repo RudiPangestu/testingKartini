@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
 
@@ -18,7 +19,12 @@ function assertSecrets() {
 
 async function bootstrap() {
   assertSecrets();
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Di belakang proxy (Render/Nginx), percayai 1 hop agar req.ip memakai
+  // X-Forwarded-For — penting agar rate limiting per-IP berfungsi benar
+  // (bukan menganggap semua request berasal dari IP proxy yang sama).
+  app.set('trust proxy', 1);
 
   app.setGlobalPrefix('api/v1');
   // CORS: batasi origin lewat env CORS_ORIGIN (pisah koma) bila diset.

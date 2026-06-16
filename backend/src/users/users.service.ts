@@ -1,9 +1,10 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -81,10 +82,21 @@ export class UsersService {
     });
   }
 
-  async update(id: string, dto: UpdateUserDto) {
-    await this.findOne(id);
+  async update(id: string, dto: UpdateUserDto, actorId?: string) {
+    const target = await this.findOne(id);
     if (dto.email) {
       await this.ensureEmailUnique(dto.email, id);
+    }
+    // Cegah penonaktifan akun sendiri (hindari terkunci tak sengaja).
+    if (actorId && id === actorId && dto.isActive === false) {
+      throw new BadRequestException('Tidak dapat menonaktifkan akun Anda sendiri');
+    }
+    // Jaga minimal satu admin aktif: blokir nonaktif/demosi admin terakhir.
+    const losesAdminRights =
+      target.role === Role.ADMIN &&
+      (dto.isActive === false || (!!dto.role && dto.role !== Role.ADMIN));
+    if (losesAdminRights) {
+      await this.assertNotLastActiveAdmin(id);
     }
     const data: Prisma.UserUpdateInput = {
       role: dto.role,
@@ -103,8 +115,14 @@ export class UsersService {
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, actorId?: string) {
+    const target = await this.findOne(id);
+    if (actorId && id === actorId) {
+      throw new BadRequestException('Tidak dapat menghapus akun Anda sendiri');
+    }
+    if (target.role === Role.ADMIN) {
+      await this.assertNotLastActiveAdmin(id);
+    }
     await this.prisma.user.delete({ where: { id } });
     return { message: 'User berhasil dihapus' };
   }
@@ -113,6 +131,16 @@ export class UsersService {
     const existing = await this.prisma.user.findUnique({ where: { email } });
     if (existing && existing.id !== exceptId) {
       throw new ConflictException('Email sudah digunakan');
+    }
+  }
+
+  /** Pastikan masih ada >=1 admin aktif lain selain user yang diubah/dihapus. */
+  private async assertNotLastActiveAdmin(excludeId: string) {
+    const others = await this.prisma.user.count({
+      where: { role: Role.ADMIN, isActive: true, id: { not: excludeId } },
+    });
+    if (others === 0) {
+      throw new BadRequestException('Minimal harus ada satu admin aktif');
     }
   }
 }

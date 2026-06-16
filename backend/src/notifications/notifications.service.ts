@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationType, Platform, Role } from '@prisma/client';
+import {
+  NotificationChannel,
+  NotificationType,
+  Platform,
+  Role,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from './channels/push.service';
 import { EmailService } from './channels/email.service';
@@ -55,6 +60,16 @@ export class NotificationsService {
     });
     if (!user) return;
 
+    const cfg = await this.settings.get();
+    // Catat channel sesuai kanal aktif (prioritas push > email > wa).
+    const channel: NotificationChannel = cfg.channelPush
+      ? 'PUSH'
+      : cfg.channelEmail
+        ? 'EMAIL'
+        : cfg.channelWa
+          ? 'WA'
+          : 'PUSH';
+
     // Simpan inbox (selalu, sebagai catatan & status baca)
     await this.prisma.notification.create({
       data: {
@@ -62,12 +77,11 @@ export class NotificationsService {
         type: payload.type,
         title: payload.title,
         body: payload.body,
-        channel: 'PUSH',
+        channel,
       },
     });
 
     // Kirim hanya lewat kanal yang diaktifkan admin.
-    const cfg = await this.settings.get();
     if (cfg.channelPush) {
       await this.push.send(
         user.pushTokens.map((t) => t.token),

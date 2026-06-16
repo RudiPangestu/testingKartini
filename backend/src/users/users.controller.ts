@@ -14,6 +14,10 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
 import { Roles } from '../common/decorators/roles.decorator';
+import {
+  CurrentUser,
+  JwtUser,
+} from '../common/decorators/current-user.decorator';
 
 // Seluruh manajemen user hanya untuk ADMIN.
 @Roles(Role.ADMIN)
@@ -37,12 +41,16 @@ export class UsersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
-    return this.usersService.update(id, dto);
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserDto,
+    @CurrentUser() actor: JwtUser,
+  ) {
+    return this.usersService.update(id, dto, actor.userId);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(id);
+  remove(@Param('id') id: string, @CurrentUser() actor: JwtUser) {
+    return this.usersService.remove(id, actor.userId);
   }
 }

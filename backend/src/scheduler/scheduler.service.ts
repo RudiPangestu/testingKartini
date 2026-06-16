@@ -151,10 +151,17 @@ export class SchedulerService {
   }
 
   private tomorrowRange() {
-    const now = new Date();
-    const start = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1),
-    );
+    // "Besok" menurut kalender WIB (Asia/Jakarta), dipetakan ke batas
+    // UTC-midnight karena eventDate disimpan sebagai tanggal pada UTC midnight.
+    // Mencegah reminder meleset 1 hari saat reminderHour diset dini hari.
+    const today = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Jakarta',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date()); // "YYYY-MM-DD"
+    const [y, m, d] = today.split('-').map(Number);
+    const start = new Date(Date.UTC(y, m - 1, d + 1)); // besok (WIB)
     const end = new Date(start);
     end.setUTCDate(end.getUTCDate() + 1);
     return { start, end };

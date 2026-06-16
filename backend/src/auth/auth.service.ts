@@ -30,11 +30,27 @@ export class AuthService {
    * murid dilakukan Admin setelahnya.
    */
   async register(dto: RegisterDto) {
+    // Respons netral & identik baik email sudah terdaftar maupun belum,
+    // agar tidak membocorkan email mana yang terdaftar (anti enumeration).
+    const generic = {
+      message:
+        'Jika email belum terdaftar, tautan verifikasi telah dikirim. Silakan cek email Anda (termasuk folder spam).',
+    };
+
     const existing = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
     if (existing) {
-      throw new BadRequestException('Email sudah terdaftar');
+      // Bila akun hasil daftar mandiri yang belum terverifikasi, kirim ulang
+      // tautan; selain itu diam (tanpa membocorkan keberadaan akun).
+      if (!existing.isActive && !existing.emailVerifiedAt) {
+        await this.sendVerification(
+          existing.id,
+          existing.email,
+          existing.fullName,
+        );
+      }
+      return generic;
     }
 
     const passwordHash = await argon2.hash(dto.password);
@@ -50,10 +66,7 @@ export class AuthService {
     });
 
     await this.sendVerification(user.id, user.email, user.fullName);
-    return {
-      message:
-        'Pendaftaran berhasil. Cek email Anda untuk tautan verifikasi sebelum login.',
-    };
+    return generic;
   }
 
   /** Verifikasi email via token sekali pakai; aktifkan akun bila valid. */
