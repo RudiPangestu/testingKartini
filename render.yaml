@@ -8,6 +8,7 @@ databases:
     databaseName: sipres
     user: sipres
     plan: free
+    region: singapore
 
 services:
   - type: web
