@@ -17,10 +17,16 @@ describe('AttendanceService (pemicu notifikasi)', () => {
     id: 'sess-1',
     sourceType: AttendanceSource.SCHEDULE,
     sessionDate: new Date('2026-06-13'),
-    schedule: { subject: { name: 'Matematika' }, class: { id: 'c1', name: 'XII' } },
+    schedule: {
+      teacherId: 'guru-1',
+      subject: { name: 'Matematika' },
+      class: { id: 'c1', name: 'XII' },
+    },
     event: null,
     records: [],
   };
+
+  const guru1 = { userId: 'guru-1', email: 'g1@kartini.sch.id', role: 'GURU' };
 
   const prisma = {
     attendanceSession: { findUnique: jest.fn().mockResolvedValue(session) },
@@ -64,7 +70,7 @@ describe('AttendanceService (pemicu notifikasi)', () => {
           { studentId: 'alpha-1', status: AttendanceStatus.ALPHA },
         ],
       },
-      'guru-1',
+      guru1,
     );
 
     expect(notifications.notifyParentsOfStudent).toHaveBeenCalledTimes(1);
@@ -83,9 +89,32 @@ describe('AttendanceService (pemicu notifikasi)', () => {
           { studentId: 's2', status: AttendanceStatus.IZIN },
         ],
       },
-      'guru-1',
+      guru1,
     );
 
     expect(notifications.notifyParentsOfStudent).toHaveBeenCalledTimes(2);
+  });
+
+  it('menolak guru yang bukan pengampu jadwal', async () => {
+    const guruLain = { userId: 'guru-2', email: 'g2@kartini.sch.id', role: 'GURU' };
+    await expect(
+      service.saveAttendance(
+        'sess-1',
+        { records: [{ studentId: 's1', status: AttendanceStatus.SAKIT }] },
+        guruLain,
+      ),
+    ).rejects.toThrow('Guru hanya dapat presensi pada jadwal yang diampu');
+    expect(notifications.notifyParentsOfStudent).not.toHaveBeenCalled();
+  });
+
+  it('mengizinkan ADMIN menyimpan presensi sesi guru mana pun', async () => {
+    const admin = { userId: 'admin-1', email: 'a@kartini.sch.id', role: 'ADMIN' };
+    await service.saveAttendance(
+      'sess-1',
+      { records: [{ studentId: 's1', status: AttendanceStatus.HADIR }] },
+      admin,
+    );
+    // Tidak melempar = lolos (HADIR tidak memicu notifikasi).
+    expect(notifications.notifyParentsOfStudent).not.toHaveBeenCalled();
   });
 });

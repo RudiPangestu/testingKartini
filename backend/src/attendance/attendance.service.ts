@@ -177,8 +177,26 @@ export class AttendanceService {
   }
 
   /** Simpan / perbarui presensi (bulk) lalu picu notifikasi ke orang tua. */
-  async saveAttendance(sessionId: string, dto: SaveAttendanceDto, userId: string) {
+  async saveAttendance(
+    sessionId: string,
+    dto: SaveAttendanceDto,
+    user: JwtUser,
+  ) {
     const session = await this.findSession(sessionId);
+    const userId = user.userId;
+
+    // Guru hanya boleh menyimpan presensi pada sesi jadwal yang ia ampu
+    // (konsisten dengan pembatasan saat membuka sesi). Sesi kegiatan (EVENT)
+    // tidak terikat guru tertentu. Admin tidak dibatasi.
+    if (
+      user.role === Role.GURU &&
+      session.sourceType === AttendanceSource.SCHEDULE &&
+      session.schedule?.teacherId !== userId
+    ) {
+      throw new ForbiddenException(
+        'Guru hanya dapat presensi pada jadwal yang diampu',
+      );
+    }
 
     // Status sebelumnya per murid — untuk menentukan apakah perlu notifikasi.
     const prevStatus = new Map<string, AttendanceStatus>(

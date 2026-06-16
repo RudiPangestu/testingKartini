@@ -3,11 +3,38 @@ import { useQuery } from '@tanstack/react-query';
 import { api, apiError, downloadFile } from '../lib/api';
 import { PageHeader } from '../components/ui';
 import { useToast } from '../components/Toast';
-import { useClasses } from '../lib/hooks';
+import { useClasses, useSubjects } from '../lib/hooks';
 import TrendChart from '../components/TrendChart';
 import type { Paginated, ReportResult, Student, Term } from '../lib/types';
 
 type Tab = 'general' | 'class' | 'individual';
+
+function SubjectSelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const subjects = useSubjects();
+  return (
+    <div>
+      <label className="label">Mata Pelajaran</label>
+      <select
+        className="input"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">Semua mapel</option>
+        {subjects.data?.map((s) => (
+          <option key={s.id} value={s.id}>
+            {s.name}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
 
 function Metric({
   label,
@@ -101,6 +128,7 @@ function ExcelExport() {
   const classes = useClasses();
   const toast = useToast();
   const [classId, setClassId] = useState('');
+  const [subjectId, setSubjectId] = useState('');
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
   const [status, setStatus] = useState('');
@@ -111,6 +139,7 @@ function ExcelExport() {
     try {
       const p = new URLSearchParams();
       if (classId) p.set('classId', classId);
+      if (subjectId) p.set('subjectId', subjectId);
       if (start) p.set('start', start);
       if (end) p.set('end', end);
       if (status) p.set('status', status);
@@ -144,6 +173,7 @@ function ExcelExport() {
           ))}
         </select>
       </div>
+      <SubjectSelect value={subjectId} onChange={setSubjectId} />
       <div>
         <label className="label">Dari Tanggal</label>
         <input
@@ -226,13 +256,15 @@ export default function ReportsPage() {
 function GeneralReport() {
   const [period, setPeriod] = useState('month');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [subjectId, setSubjectId] = useState('');
   const isTermBased = ['mid', 'semester', 'year'].includes(period);
 
   const q = useQuery({
-    queryKey: ['report-general', period, date],
+    queryKey: ['report-general', period, date, subjectId],
     queryFn: async () => {
       const p = new URLSearchParams({ period });
       if (!isTermBased) p.set('date', date);
+      if (subjectId) p.set('subjectId', subjectId);
       return (await api.get<ReportResult>(`/reports/general?${p}`)).data;
     },
   });
@@ -266,9 +298,10 @@ function GeneralReport() {
             />
           </div>
         )}
+        <SubjectSelect value={subjectId} onChange={setSubjectId} />
       </div>
       {q.data && <ResultView data={q.data} />}
-      <TrendChart days={14} />
+      <TrendChart subjectId={subjectId || undefined} days={14} />
     </div>
   );
 }
@@ -278,12 +311,14 @@ function ClassReport() {
   const [classId, setClassId] = useState('');
   const [period, setPeriod] = useState('month');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [subjectId, setSubjectId] = useState('');
 
   const q = useQuery({
-    queryKey: ['report-class', classId, period, date],
+    queryKey: ['report-class', classId, period, date, subjectId],
     enabled: !!classId,
     queryFn: async () => {
       const p = new URLSearchParams({ period, date });
+      if (subjectId) p.set('subjectId', subjectId);
       return (await api.get<ReportResult>(`/reports/class/${classId}?${p}`)).data;
     },
   });
@@ -327,9 +362,16 @@ function ClassReport() {
             onChange={(e) => setDate(e.target.value)}
           />
         </div>
+        <SubjectSelect value={subjectId} onChange={setSubjectId} />
       </div>
       {q.data && <ResultView data={q.data} />}
-      {classId && <TrendChart classId={classId} days={14} />}
+      {classId && (
+        <TrendChart
+          classId={classId}
+          subjectId={subjectId || undefined}
+          days={14}
+        />
+      )}
     </div>
   );
 }
@@ -338,6 +380,7 @@ function IndividualReport() {
   const [studentId, setStudentId] = useState('');
   const [period, setPeriod] = useState('semester');
   const [termId, setTermId] = useState('');
+  const [subjectId, setSubjectId] = useState('');
 
   const students = useQuery({
     queryKey: ['students-all'],
@@ -350,11 +393,12 @@ function IndividualReport() {
   });
 
   const q = useQuery({
-    queryKey: ['report-student', studentId, period, termId],
+    queryKey: ['report-student', studentId, period, termId, subjectId],
     enabled: !!studentId,
     queryFn: async () => {
       const p = new URLSearchParams({ period });
       if (termId) p.set('termId', termId);
+      if (subjectId) p.set('subjectId', subjectId);
       return (await api.get<ReportResult>(`/reports/student/${studentId}?${p}`))
         .data;
     },
@@ -405,9 +449,16 @@ function IndividualReport() {
             ))}
           </select>
         </div>
+        <SubjectSelect value={subjectId} onChange={setSubjectId} />
       </div>
       {q.data && <ResultView data={q.data} />}
-      {studentId && <TrendChart studentId={studentId} days={14} />}
+      {studentId && (
+        <TrendChart
+          studentId={studentId}
+          subjectId={subjectId || undefined}
+          days={14}
+        />
+      )}
     </div>
   );
 }

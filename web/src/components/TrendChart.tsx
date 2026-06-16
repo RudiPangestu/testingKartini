@@ -9,18 +9,21 @@ import type { TrendResult } from '../lib/types';
 export default function TrendChart({
   studentId,
   classId,
+  subjectId,
   days = 14,
 }: {
   studentId?: string;
   classId?: string;
+  subjectId?: string;
   days?: number;
 }) {
   const q = useQuery({
-    queryKey: ['trend', studentId ?? '', classId ?? '', days],
+    queryKey: ['trend', studentId ?? '', classId ?? '', subjectId ?? '', days],
     queryFn: async () => {
       const p = new URLSearchParams({ days: String(days) });
       if (studentId) p.set('studentId', studentId);
       if (classId) p.set('classId', classId);
+      if (subjectId) p.set('subjectId', subjectId);
       return (await api.get<TrendResult>(`/reports/trend?${p}`)).data;
     },
   });

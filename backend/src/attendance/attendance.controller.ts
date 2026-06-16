@@ -57,7 +57,7 @@ export class AttendanceController {
     @Body() dto: SaveAttendanceDto,
     @CurrentUser() user: JwtUser,
   ) {
-    return this.service.saveAttendance(id, dto, user.userId);
+    return this.service.saveAttendance(id, dto, user);
   }
 
   @Roles(Role.ADMIN, Role.GURU, Role.ORTU, Role.MURID)

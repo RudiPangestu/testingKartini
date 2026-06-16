@@ -12,6 +12,7 @@ import {
 export interface ExportFilter {
   classId?: string;
   studentId?: string;
+  subjectId?: string;
   start?: string; // YYYY-MM-DD (inklusif)
   end?: string; // YYYY-MM-DD (inklusif)
   status?: AttendanceStatus;
@@ -38,10 +39,15 @@ export class ReportsService {
   constructor(private prisma: PrismaService) {}
 
   // ---------- LAPORAN UMUM ----------
-  async general(period: string, date?: string, termId?: string) {
+  async general(
+    period: string,
+    date?: string,
+    termId?: string,
+    subjectId?: string,
+  ) {
     const range = await this.resolveRange(period, date, termId);
     const where: Prisma.AttendanceWhereInput = {
-      session: this.sessionDateFilter(range),
+      session: this.sessionWhere(range, { subjectId }),
     };
     const breakdown = await this.aggregate(where);
     return {
@@ -59,6 +65,7 @@ export class ReportsService {
     period: string,
     termId?: string,
     requester?: JwtUser,
+    subjectId?: string,
   ) {
     if (requester) {
       await assertStudentAccess(this.prisma, requester, studentId);
@@ -72,7 +79,7 @@ export class ReportsService {
     const range = await this.resolveRange(period, undefined, termId);
     const where: Prisma.AttendanceWhereInput = {
       studentId,
-      session: this.sessionDateFilter(range),
+      session: this.sessionWhere(range, { subjectId }),
     };
     const breakdown = await this.aggregate(where);
     return {
@@ -93,6 +100,7 @@ export class ReportsService {
     date?: string,
     termId?: string,
     requester?: JwtUser,
+    subjectId?: string,
   ) {
     if (requester && requester.role === 'GURU') {
       await assertTeacherManagesClass(this.prisma, requester.userId, classId);
@@ -101,7 +109,7 @@ export class ReportsService {
     // Pakai snapshot kelas pada sesi (bukan kelas murid saat ini) agar rekap
     // historis tetap akurat meski murid sudah pindah kelas.
     const where: Prisma.AttendanceWhereInput = {
-      session: { classId, ...this.sessionDateFilter(range) },
+      session: this.sessionWhere(range, { classId, subjectId }),
     };
     const breakdown = await this.aggregate(where);
     return { scope: 'class', classId, period, range: this.rangeLabel(range), ...breakdown };
@@ -109,16 +117,24 @@ export class ReportsService {
 
   // ---------- TREN (per hari) ----------
   async trend(
-    opts: { studentId?: string; classId?: string; days?: number },
+    opts: {
+      studentId?: string;
+      classId?: string;
+      subjectId?: string;
+      days?: number;
+    },
     requester?: JwtUser,
   ) {
     const days = Math.min(Math.max(Number(opts.days) || 14, 1), 90);
     const end = this.addDays(this.atMidnight(new Date()), 1); // termasuk hari ini
     const start = this.addDays(end, -days);
 
-    const where: Prisma.AttendanceWhereInput = {
-      session: { sessionDate: { gte: start, lt: end } },
+    const session: Prisma.AttendanceSessionWhereInput = {
+      sessionDate: { gte: start, lt: end },
     };
+    if (opts.subjectId) session.schedule = { subjectId: opts.subjectId };
+
+    const where: Prisma.AttendanceWhereInput = { session };
     if (opts.studentId) {
       if (requester) await assertStudentAccess(this.prisma, requester, opts.studentId);
       where.studentId = opts.studentId;
@@ -126,7 +142,7 @@ export class ReportsService {
       if (requester?.role === 'GURU') {
         await assertTeacherManagesClass(this.prisma, requester.userId, opts.classId);
       }
-      where.session = { classId: opts.classId, sessionDate: { gte: start, lt: end } };
+      session.classId = opts.classId;
     }
 
     const rows = await this.prisma.attendance.findMany({
@@ -202,6 +218,11 @@ export class ReportsService {
       // Guru tanpa filter kelas: batasi ke kelas yang ia ampu.
       const ids = await teacherClassIds(this.prisma, requester.userId);
       sessionFilter.classId = { in: ids.length ? ids : ['__none__'] };
+    }
+
+    // Filter mapel (mengecualikan sesi kegiatan tanpa jadwal).
+    if (filter.subjectId) {
+      sessionFilter.schedule = { subjectId: filter.subjectId };
     }
 
     if (Object.keys(sessionFilter).length) where.session = sessionFilter;
@@ -324,6 +345,23 @@ export class ReportsService {
   private sessionDateFilter(range: DateRange | null) {
     if (!range) return {};
     return { sessionDate: { gte: range.start, lt: range.end } };
+  }
+
+  /**
+   * Filter sesi gabungan: rentang tanggal + opsional kelas + opsional mapel.
+   * Filter mapel via session.schedule.subjectId — otomatis mengecualikan sesi
+   * kegiatan (EVENT) yang tidak terkait mata pelajaran.
+   */
+  private sessionWhere(
+    range: DateRange | null,
+    opts?: { classId?: string; subjectId?: string },
+  ): Prisma.AttendanceSessionWhereInput {
+    const f: Prisma.AttendanceSessionWhereInput = {
+      ...this.sessionDateFilter(range),
+    };
+    if (opts?.classId) f.classId = opts.classId;
+    if (opts?.subjectId) f.schedule = { subjectId: opts.subjectId };
+    return f;
   }
 
   private rangeLabel(range: DateRange | null) {

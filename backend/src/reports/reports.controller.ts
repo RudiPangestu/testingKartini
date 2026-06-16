@@ -19,8 +19,9 @@ export class ReportsController {
     @Query('period') period = 'month',
     @Query('date') date?: string,
     @Query('termId') termId?: string,
+    @Query('subjectId') subjectId?: string,
   ) {
-    return this.service.general(period, date, termId);
+    return this.service.general(period, date, termId, subjectId);
   }
 
   // Persentase individual: period=triwulan|semester|year
@@ -31,8 +32,9 @@ export class ReportsController {
     @CurrentUser() user: JwtUser,
     @Query('period') period = 'semester',
     @Query('termId') termId?: string,
+    @Query('subjectId') subjectId?: string,
   ) {
-    return this.service.student(studentId, period, termId, user);
+    return this.service.student(studentId, period, termId, user, subjectId);
   }
 
   // Tren kehadiran per hari (untuk grafik). Filter opsional studentId/classId.
@@ -43,15 +45,16 @@ export class ReportsController {
     @Query('days') days?: string,
     @Query('studentId') studentId?: string,
     @Query('classId') classId?: string,
+    @Query('subjectId') subjectId?: string,
   ) {
     return this.service.trend(
-      { studentId, classId, days: days ? Number(days) : undefined },
+      { studentId, classId, subjectId, days: days ? Number(days) : undefined },
       user,
     );
   }
 
   // Export rekap absensi ke Excel (.xlsx) sesuai filter.
-  // Query: classId, studentId, start, end (YYYY-MM-DD), status.
+  // Query: classId, studentId, subjectId, start, end (YYYY-MM-DD), status.
   @Roles(Role.ADMIN, Role.GURU)
   @Get('export')
   async export(
@@ -59,12 +62,13 @@ export class ReportsController {
     @Res() res: Response,
     @Query('classId') classId?: string,
     @Query('studentId') studentId?: string,
+    @Query('subjectId') subjectId?: string,
     @Query('start') start?: string,
     @Query('end') end?: string,
     @Query('status') status?: AttendanceStatus,
   ) {
     const buffer = await this.service.exportXlsx(
-      { classId, studentId, start, end, status },
+      { classId, studentId, subjectId, start, end, status },
       user,
     );
     const stamp = new Date().toISOString().slice(0, 10);
@@ -85,7 +89,8 @@ export class ReportsController {
     @Query('period') period = 'month',
     @Query('date') date?: string,
     @Query('termId') termId?: string,
+    @Query('subjectId') subjectId?: string,
   ) {
-    return this.service.byClass(classId, period, date, termId, user);
+    return this.service.byClass(classId, period, date, termId, user, subjectId);
   }
 }
