@@ -4,17 +4,27 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Tone resmi SMA Kartini Batam (tema "green_land"): hijau + emas.
         brand: {
-          50: '#fdf2f5',
-          100: '#fce7ec',
-          200: '#fbcfdb',
-          300: '#f7a8c0',
-          400: '#ee6d96',
-          500: '#c2185b',
-          600: '#ad1457',
-          700: '#880e4f',
-          800: '#6d0c40',
-          900: '#4f0a30',
+          50: '#f1f7ef',
+          100: '#ddebd9',
+          200: '#bdd8b5',
+          300: '#93bd88',
+          400: '#639b56',
+          500: '#437d39',
+          600: '#32642d', // hijau utama situs
+          700: '#224820', // hijau tua situs
+          800: '#1b3a19',
+          900: '#112610',
+        },
+        // Aksen emas/kuning dari situs (#fbbc05).
+        accent: {
+          50: '#fffbeb',
+          100: '#fef3c7',
+          400: '#ffce3a',
+          500: '#fbbc05',
+          600: '#dba600',
+          700: '#a87f00',
         },
       },
       boxShadow: {

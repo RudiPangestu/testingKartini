@@ -7,9 +7,11 @@
     "scheme": "sipreskartini",
     "userInterfaceStyle": "light",
     "splash": {
-      "backgroundColor": "#c2185b"
+      "backgroundColor": "#224820"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "id.sch.kartini.sipres"
@@ -18,9 +20,15 @@
       "package": "id.sch.kartini.sipres",
       "useNextNotificationsApi": true
     },
-    "plugins": ["expo-notifications"],
+    "plugins": [
+      "expo-notifications"
+    ],
     "extra": {
-      "apiBaseUrl": "https://sipres-api-poy9.onrender.com/api/v1"
-    }
+      "apiBaseUrl": "https://sipres-api-poy9.onrender.com/api/v1",
+      "eas": {
+        "projectId": "2ed7cc85-aab4-4bad-ac3f-b6d80b2b7665"
+      }
+    },
+    "owner": "rudidudjxnc"
   }
 }

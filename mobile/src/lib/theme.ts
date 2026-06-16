@@ -1,6 +1,8 @@
 export const colors = {
-  brand: '#c2185b',
-  brandDark: '#880e4f',
+  // Tone resmi SMA Kartini Batam (hijau + emas).
+  brand: '#32642d',
+  brandDark: '#224820',
+  gold: '#fbbc05',
   bg: '#f7f7f8',
   card: '#ffffff',
   text: '#111827',

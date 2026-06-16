@@ -73,7 +73,7 @@ export default function Layout() {
       <aside className="sticky top-0 flex h-screen w-64 flex-col border-r border-gray-200 bg-white">
         {/* Header brand */}
         <div className="flex items-center gap-3 px-5 py-5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white shadow-sm">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-700 via-brand-600 to-accent-500 text-sm font-bold text-white shadow-sm">
             SK
           </div>
           <div className="leading-tight">
