@@ -124,7 +124,7 @@ export default function UsersPage() {
         />
       </div>
 
-      <div className="card overflow-hidden p-0">
+      <div className="card overflow-x-auto p-0">
         {list.isLoading ? (
           <Spinner />
         ) : !list.data?.data.length ? (

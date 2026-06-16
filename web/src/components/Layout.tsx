@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useAuth } from '../lib/auth';
 import { api } from '../lib/api';
 import type { Role } from '../lib/types';
@@ -58,6 +58,7 @@ export default function Layout() {
   const navigate = useNavigate();
 
   const items = NAV.filter((n) => user && n.roles.includes(user.role));
+  const [open, setOpen] = useState(false);
 
   async function handleLogout() {
     const refreshToken = useAuth.getState().refreshToken;
@@ -69,8 +70,45 @@ export default function Layout() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <aside className="sticky top-0 flex h-screen w-64 flex-col border-r border-gray-200 bg-white">
+    <div className="min-h-screen bg-gray-50">
+      {/* Topbar (hanya mobile) */}
+      <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 lg:hidden">
+        <button
+          onClick={() => setOpen(true)}
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100"
+          aria-label="Buka menu"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.8}
+            strokeLinecap="round"
+            className="h-6 w-6"
+          >
+            <path d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-700 via-brand-600 to-accent-500 text-xs font-bold text-white">
+          SK
+        </div>
+        <span className="font-bold text-gray-900">SIPRES Kartini</span>
+      </header>
+
+      {/* Backdrop saat drawer terbuka (mobile) */}
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm lg:hidden"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
+      <aside
+        className={
+          'fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-gray-200 bg-white transition-transform duration-200 lg:translate-x-0 ' +
+          (open ? 'translate-x-0' : '-translate-x-full')
+        }
+      >
         {/* Header brand */}
         <div className="flex items-center gap-3 px-5 py-5">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-700 via-brand-600 to-accent-500 text-sm font-bold text-white shadow-sm">
@@ -94,6 +132,7 @@ export default function Layout() {
               key={it.to}
               to={it.to}
               end={it.to === '/'}
+              onClick={() => setOpen(false)}
               className={({ isActive }) =>
                 'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ' +
                 (isActive
@@ -152,8 +191,8 @@ export default function Layout() {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-x-hidden">
-        <div className="mx-auto max-w-7xl p-6 lg:p-8">
+      <main className="overflow-x-hidden lg:pl-64">
+        <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
           <Outlet />
         </div>
       </main>

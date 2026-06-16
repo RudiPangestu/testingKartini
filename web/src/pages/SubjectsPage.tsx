@@ -64,7 +64,7 @@ export default function SubjectsPage() {
           </button>
         }
       />
-      <div className="card overflow-hidden p-0">
+      <div className="card overflow-x-auto p-0">
         {list.isLoading ? (
           <Spinner />
         ) : !list.data?.length ? (
