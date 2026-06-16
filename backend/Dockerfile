@@ -23,9 +23,11 @@ ENV NODE_ENV=production
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
+# tsconfig.json diperlukan ts-node saat menjalankan seed (prisma/seed.ts)
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY package*.json ./
 
 EXPOSE 3000
 
-# Terapkan migrasi lalu jalankan API
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
+# Migrasi + seed admin awal (idempoten, tidak menggagalkan boot) lalu jalankan API
+CMD ["sh", "-c", "npx prisma migrate deploy && (npm run seed || true) && node dist/main.js"]
