@@ -17,7 +17,8 @@
       "bundleIdentifier": "id.sch.kartini.sipres"
     },
     "android": {
-      "package": "id.sch.kartini.sipres"
+      "package": "id.sch.kartini.sipres",
+      "googleServicesFile": "./google-services.json"
     },
     "plugins": [
       "expo-notifications"

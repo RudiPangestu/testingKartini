@@ -1,0 +1,9 @@
+# Firebase service account / private key — RAHASIA, jangan pernah commit.
+# (Diupload ke EAS lewat `eas credentials`, bukan ke repo.)
+*-firebase-adminsdk-*.json
+service-account*.json
+
+# Expo / build
+.expo/
+dist/
+*.tsbuildinfo

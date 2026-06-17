@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "9949657300",
+    "project_id": "kartini-7ebad",
+    "storage_bucket": "kartini-7ebad.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:9949657300:android:410296df2604d59ba22341",
+        "android_client_info": {
+          "package_name": "id.sch.kartini.sipres"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyACQfqQ3FZC1-zCiqfCqnSyn9HYEVSaqoA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
