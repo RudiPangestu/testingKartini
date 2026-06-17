@@ -17,8 +17,7 @@
       "bundleIdentifier": "id.sch.kartini.sipres"
     },
     "android": {
-      "package": "id.sch.kartini.sipres",
-      "useNextNotificationsApi": true
+      "package": "id.sch.kartini.sipres"
     },
     "plugins": [
       "expo-notifications"
