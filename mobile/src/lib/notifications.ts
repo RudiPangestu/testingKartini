@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import { api } from './api';
 
 Notifications.setNotificationHandler({
@@ -36,12 +37,23 @@ export async function registerForPushNotifications(): Promise<void> {
   }
 
   try {
-    const tokenData = await Notifications.getExpoPushTokenAsync();
+    // projectId diperlukan pada build standalone (di luar Expo Go).
+    const projectId =
+      Constants.expoConfig?.extra?.eas?.projectId ??
+      (Constants as { easConfig?: { projectId?: string } }).easConfig
+        ?.projectId;
+    const tokenData = await Notifications.getExpoPushTokenAsync(
+      projectId ? { projectId } : undefined,
+    );
     await api.post('/auth/push-token', {
       token: tokenData.data,
       platform: Platform.OS === 'ios' ? 'IOS' : 'ANDROID',
     });
-  } catch {
-    // Diabaikan: gagal ambil/daftar token tidak boleh menghentikan aplikasi.
+  } catch (err) {
+    // Jangan hentikan aplikasi, tapi catat agar bisa di-debug. Di build
+    // Android standalone, kegagalan di sini biasanya karena Firebase (FCM)
+    // belum dikonfigurasi.
+    // eslint-disable-next-line no-console
+    console.warn('Gagal mendaftar push token:', (err as Error)?.message ?? err);
   }
 }
