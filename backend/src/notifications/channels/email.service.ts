@@ -3,43 +3,103 @@ import * as nodemailer from 'nodemailer';
 import { retry } from '../../common/retry';
 
 /**
- * Pengiriman email via Resend HTTP API (prioritas) atau SMTP (fallback).
+ * Pengiriman email multi-channel dengan fallback otomatis:
  *
- * - **Resend** (direkomendasikan untuk hosting seperti Render yang memblokir
- *   port SMTP): set env `RESEND_API_KEY`. Gratis 100 email/hari.
- *   Tanpa verifikasi domain, pengirim otomatis `onboarding@resend.dev`.
- *   Bila `RESEND_FROM` diset (setelah verifikasi domain di Resend), alamat
- *   tersebut digunakan sebagai pengirim.
+ * 1. **Mailjet** (prioritas — gratis 200 email/hari, cukup verifikasi email
+ *    pengirim): set env `MAILJET_API_KEY` + `MAILJET_SECRET_KEY`.
  *
- * - **SMTP** (fallback untuk lokal / self-hosted): set env `SMTP_HOST`,
- *   `SMTP_USER`, `SMTP_PASS`.
+ * 2. **Resend** (alternatif — gratis 100 email/hari, butuh verifikasi domain
+ *    untuk kirim ke luar): set env `RESEND_API_KEY`.
  *
- * Bila keduanya tidak dikonfigurasi, email dilewati (no-op aman).
+ * 3. **SMTP** (fallback untuk lokal / self-hosted yang tidak blokir port
+ *    587/465): set env `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`.
+ *
+ * Bila tidak ada yang dikonfigurasi, email dilewati (no-op aman).
  */
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private transporter: nodemailer.Transporter | null = null;
 
+  /** Alamat pengirim yang dipakai di semua channel. */
+  private get senderFrom(): { email: string; name: string } {
+    const raw =
+      process.env.SMTP_FROM ||
+      process.env.SMTP_USER ||
+      'noreply@kartini.sch.id';
+    // Parse format "Name <email>" jika ada
+    const match = raw.match(/^(.+?)\s*<(.+)>$/);
+    return match
+      ? { name: match[1].trim(), email: match[2].trim() }
+      : { name: 'SIPRES Kartini', email: raw.trim() };
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Mailjet HTTP API                                                   */
+  /* ------------------------------------------------------------------ */
+
+  private async sendViaMailjet(
+    to: string,
+    subject: string,
+    text: string,
+  ): Promise<boolean> {
+    const apiKey = process.env.MAILJET_API_KEY;
+    const secretKey = process.env.MAILJET_SECRET_KEY;
+    if (!apiKey || !secretKey) return false;
+
+    const from = this.senderFrom;
+    const credentials = Buffer.from(`${apiKey}:${secretKey}`).toString(
+      'base64',
+    );
+
+    try {
+      await retry(async () => {
+        const res = await fetch('https://api.mailjet.com/v3.1/send', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Basic ${credentials}`,
+          },
+          body: JSON.stringify({
+            Messages: [
+              {
+                From: { Email: from.email, Name: from.name },
+                To: [{ Email: to }],
+                Subject: subject,
+                TextPart: text,
+              },
+            ],
+          }),
+        });
+        if (!res.ok) {
+          const body = await res.text();
+          throw new Error(`Mailjet HTTP ${res.status}: ${body}`);
+        }
+      });
+      this.logger.log(`Email terkirim via Mailjet ke ${to}`);
+      return true;
+    } catch (err) {
+      this.logger.warn(
+        `Mailjet gagal setelah retry ke ${to}: ${(err as Error).message}`,
+      );
+      return false;
+    }
+  }
+
   /* ------------------------------------------------------------------ */
   /*  Resend HTTP API                                                    */
   /* ------------------------------------------------------------------ */
-
-  private get resendKey(): string | undefined {
-    return process.env.RESEND_API_KEY;
-  }
 
   private async sendViaResend(
     to: string,
     subject: string,
     text: string,
   ): Promise<boolean> {
-    const apiKey = this.resendKey;
-    if (!apiKey) return false; // Resend tidak dikonfigurasi
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) return false;
 
     const from =
       process.env.RESEND_FROM ||
-      process.env.SMTP_FROM ||
       'SIPRES Kartini <onboarding@resend.dev>';
 
     try {
@@ -119,15 +179,19 @@ export class EmailService {
   async send(to: string, subject: string, text: string): Promise<void> {
     if (!to) return;
 
-    // Prioritas 1: Resend HTTP API (tidak kena blokir port)
+    // Prioritas 1: Mailjet (cukup verifikasi email pengirim)
+    if (await this.sendViaMailjet(to, subject, text)) return;
+
+    // Prioritas 2: Resend (butuh verifikasi domain)
     if (await this.sendViaResend(to, subject, text)) return;
 
-    // Prioritas 2: SMTP (untuk lokal / self-hosted)
+    // Prioritas 3: SMTP (untuk lokal / self-hosted)
     if (await this.sendViaSmtp(to, subject, text)) return;
 
     // Tidak ada channel email yang dikonfigurasi
     this.logger.warn(
-      `Email ke ${to} dilewati — RESEND_API_KEY maupun SMTP belum dikonfigurasi`,
+      `Email ke ${to} dilewati — belum ada email provider yang dikonfigurasi`,
     );
   }
 }
+
