@@ -38,52 +38,75 @@ export class EmailService {
   /*  Mailjet HTTP API                                                   */
   /* ------------------------------------------------------------------ */
 
-  private async sendViaMailjet(
+
+  private sendViaMailjet(
     to: string,
     subject: string,
     text: string,
   ): Promise<boolean> {
     const apiKey = process.env.MAILJET_API_KEY;
     const secretKey = process.env.MAILJET_SECRET_KEY;
-    if (!apiKey || !secretKey) return false;
+    if (!apiKey || !secretKey) return Promise.resolve(false);
 
     const from = this.senderFrom;
     const credentials = Buffer.from(`${apiKey}:${secretKey}`).toString(
       'base64',
     );
+    const payload = JSON.stringify({
+      Messages: [
+        {
+          From: { Email: from.email, Name: from.name },
+          To: [{ Email: to }],
+          Subject: subject,
+          TextPart: text,
+        },
+      ],
+    });
 
-    try {
-      await retry(async () => {
-        const res = await fetch('https://api.mailjet.com/v3.1/send', {
+    // Gunakan https module bawaan Node — lebih kompatibel di Render
+    // daripada native fetch yang kadang gagal ke endpoint tertentu.
+    const https = require('https');
+    return new Promise<boolean>((resolve) => {
+      const req = https.request(
+        {
+          hostname: 'api.mailjet.com',
+          path: '/v3.1/send',
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(payload),
             Authorization: `Basic ${credentials}`,
           },
-          body: JSON.stringify({
-            Messages: [
-              {
-                From: { Email: from.email, Name: from.name },
-                To: [{ Email: to }],
-                Subject: subject,
-                TextPart: text,
-              },
-            ],
-          }),
-        });
-        if (!res.ok) {
-          const body = await res.text();
-          throw new Error(`Mailjet HTTP ${res.status}: ${body}`);
-        }
-      });
-      this.logger.log(`Email terkirim via Mailjet ke ${to}`);
-      return true;
-    } catch (err) {
-      this.logger.warn(
-        `Mailjet gagal setelah retry ke ${to}: ${(err as Error).message}`,
+          timeout: 15_000,
+        },
+        (res: import('http').IncomingMessage) => {
+          let body = '';
+          res.on('data', (chunk: string) => (body += chunk));
+          res.on('end', () => {
+            if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+              this.logger.log(`Email terkirim via Mailjet ke ${to}`);
+              resolve(true);
+            } else {
+              this.logger.warn(
+                `Mailjet HTTP ${res.statusCode} ke ${to}: ${body}`,
+              );
+              resolve(false);
+            }
+          });
+        },
       );
-      return false;
-    }
+      req.on('timeout', () => {
+        this.logger.warn(`Mailjet timeout ke ${to}`);
+        req.destroy();
+        resolve(false);
+      });
+      req.on('error', (err: Error) => {
+        this.logger.warn(`Mailjet error ke ${to}: ${err.message}`);
+        resolve(false);
+      });
+      req.write(payload);
+      req.end();
+    });
   }
 
   /* ------------------------------------------------------------------ */
