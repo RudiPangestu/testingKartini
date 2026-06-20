@@ -5,13 +5,18 @@ import { retry } from '../../common/retry';
 /**
  * Pengiriman email multi-channel dengan fallback otomatis:
  *
- * 1. **Mailjet** (prioritas — gratis 200 email/hari, cukup verifikasi email
- *    pengirim): set env `MAILJET_API_KEY` + `MAILJET_SECRET_KEY`.
+ * 1. **Gmail API** (prioritas — gratis ~500 email/hari, kirim lewat akun Gmail
+ *    sendiri via REST API port 443; tidak butuh domain & tidak diblokir Render):
+ *    set env `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`,
+ *    dan `SMTP_FROM` (alamat Gmail pengirim).
  *
- * 2. **Resend** (alternatif — gratis 100 email/hari, butuh verifikasi domain
- *    untuk kirim ke luar): set env `RESEND_API_KEY`.
+ * 2. **Mailjet** (gratis 200 email/hari, cukup verifikasi email pengirim — tapi
+ *    sering diblokir di Render): set env `MAILJET_API_KEY` + `MAILJET_SECRET_KEY`.
  *
- * 3. **SMTP** (fallback untuk lokal / self-hosted yang tidak blokir port
+ * 3. **Resend** (gratis 100 email/hari, butuh verifikasi domain untuk kirim ke
+ *    luar): set env `RESEND_API_KEY`.
+ *
+ * 4. **SMTP** (fallback untuk lokal / self-hosted yang tidak blokir port
  *    587/465): set env `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`.
  *
  * Bila tidak ada yang dikonfigurasi, email dilewati (no-op aman).
@@ -20,6 +25,9 @@ import { retry } from '../../common/retry';
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private transporter: nodemailer.Transporter | null = null;
+
+  /** Cache access token Gmail (refresh token ditukar jadi access token). */
+  private gmailToken: { value: string; expiresAt: number } | null = null;
 
   /** Alamat pengirim yang dipakai di semua channel. */
   private get senderFrom(): { email: string; name: string } {
@@ -32,6 +40,110 @@ export class EmailService {
     return match
       ? { name: match[1].trim(), email: match[2].trim() }
       : { name: 'SIPRES Kartini', email: raw.trim() };
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Gmail API (HTTP, OAuth2)                                            */
+  /* ------------------------------------------------------------------ */
+
+  /** Tukar refresh token jadi access token (dicache sampai mendekati expired). */
+  private async getGmailAccessToken(): Promise<string | null> {
+    const clientId = process.env.GMAIL_CLIENT_ID;
+    const clientSecret = process.env.GMAIL_CLIENT_SECRET;
+    const refreshToken = process.env.GMAIL_REFRESH_TOKEN;
+    if (!clientId || !clientSecret || !refreshToken) return null;
+
+    // Pakai cache bila masih berlaku (sisa > 60 detik).
+    if (this.gmailToken && this.gmailToken.expiresAt - Date.now() > 60_000) {
+      return this.gmailToken.value;
+    }
+
+    const res = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token',
+      }).toString(),
+    });
+    if (!res.ok) {
+      this.logger.warn(`Gmail OAuth gagal: HTTP ${res.status} ${await res.text()}`);
+      return null;
+    }
+    const json = (await res.json()) as {
+      access_token: string;
+      expires_in: number;
+    };
+    this.gmailToken = {
+      value: json.access_token,
+      expiresAt: Date.now() + json.expires_in * 1000,
+    };
+    return json.access_token;
+  }
+
+  /** Susun pesan RFC 2822 (UTF-8 aman) lalu encode base64url untuk Gmail API. */
+  private buildRawMessage(to: string, subject: string, text: string): string {
+    const from = this.senderFrom;
+    const encodedSubject = `=?UTF-8?B?${Buffer.from(subject, 'utf8').toString(
+      'base64',
+    )}?=`;
+    const encodedBody = Buffer.from(text, 'utf8').toString('base64');
+    const headers = [
+      `From: ${from.name} <${from.email}>`,
+      `To: ${to}`,
+      `Subject: ${encodedSubject}`,
+      'MIME-Version: 1.0',
+      'Content-Type: text/plain; charset="UTF-8"',
+      'Content-Transfer-Encoding: base64',
+    ].join('\r\n');
+    const mime = `${headers}\r\n\r\n${encodedBody}`;
+    // base64url: tanpa padding, +/ -> -_
+    return Buffer.from(mime, 'utf8')
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  }
+
+  private async sendViaGmailApi(
+    to: string,
+    subject: string,
+    text: string,
+  ): Promise<boolean> {
+    const accessToken = await this.getGmailAccessToken();
+    if (!accessToken) return false;
+
+    try {
+      await retry(async () => {
+        const res = await fetch(
+          'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              raw: this.buildRawMessage(to, subject, text),
+            }),
+          },
+        );
+        if (!res.ok) {
+          // Token bisa kedaluwarsa di tengah jalan — buang cache agar di-refresh.
+          if (res.status === 401) this.gmailToken = null;
+          throw new Error(`Gmail API HTTP ${res.status}: ${await res.text()}`);
+        }
+      });
+      this.logger.log(`Email terkirim via Gmail API ke ${to}`);
+      return true;
+    } catch (err) {
+      this.logger.warn(
+        `Gmail API gagal setelah retry ke ${to}: ${(err as Error).message}`,
+      );
+      return false;
+    }
   }
 
   /* ------------------------------------------------------------------ */
@@ -202,13 +314,16 @@ export class EmailService {
   async send(to: string, subject: string, text: string): Promise<void> {
     if (!to) return;
 
-    // Prioritas 1: Mailjet (cukup verifikasi email pengirim)
+    // Prioritas 1: Gmail API (lewat akun Gmail sendiri, HTTP 443, tanpa domain)
+    if (await this.sendViaGmailApi(to, subject, text)) return;
+
+    // Prioritas 2: Mailjet (cukup verifikasi email pengirim)
     if (await this.sendViaMailjet(to, subject, text)) return;
 
-    // Prioritas 2: Resend (butuh verifikasi domain)
+    // Prioritas 3: Resend (butuh verifikasi domain)
     if (await this.sendViaResend(to, subject, text)) return;
 
-    // Prioritas 3: SMTP (untuk lokal / self-hosted)
+    // Prioritas 4: SMTP (untuk lokal / self-hosted)
     if (await this.sendViaSmtp(to, subject, text)) return;
 
     // Tidak ada channel email yang dikonfigurasi
