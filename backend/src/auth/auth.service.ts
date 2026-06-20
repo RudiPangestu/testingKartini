@@ -116,8 +116,13 @@ export class AuthService {
       data: { userId, tokenHash: sha256(token), expiresAt },
     });
 
-    const base = process.env.APP_WEB_URL || 'http://localhost:5173';
-    const link = `${base}/verify-email?token=${token}`;
+    // Arahkan ke endpoint API langsung (menampilkan halaman HTML konfirmasi),
+    // supaya verifikasi tetap jalan walau web frontend belum di-deploy.
+    const base =
+      process.env.API_PUBLIC_URL ||
+      process.env.APP_WEB_URL ||
+      'http://localhost:3000/api/v1';
+    const link = `${base}/auth/verify-email?token=${token}`;
     await this.email.send(
       toEmail,
       'Verifikasi Email — SIPRES Kartini',

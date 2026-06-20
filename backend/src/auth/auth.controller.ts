@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Header,
   HttpCode,
   Post,
   Query,
@@ -39,10 +40,26 @@ export class AuthController {
     return this.authService.register(dto);
   }
 
+  // Dibuka langsung dari tautan di email → tampilkan halaman HTML konfirmasi
+  // (bukan JSON), supaya verifikasi tetap jalan tanpa web frontend.
   @Public()
   @Get('verify-email')
-  verifyEmail(@Query('token') token: string) {
-    return this.authService.verifyEmail(token);
+  @Header('Content-Type', 'text/html; charset=utf-8')
+  async verifyEmail(@Query('token') token: string) {
+    try {
+      await this.authService.verifyEmail(token);
+      return renderVerifyPage(
+        true,
+        'Email Terverifikasi',
+        'Email Anda berhasil diverifikasi. Silakan kembali ke aplikasi SIPRES Kartini dan login.',
+      );
+    } catch (err) {
+      return renderVerifyPage(
+        false,
+        'Verifikasi Gagal',
+        (err as Error)?.message ?? 'Token tidak valid atau sudah kedaluwarsa.',
+      );
+    }
   }
 
   @Throttle({ default: { limit: 3, ttl: 60000 } })
@@ -71,4 +88,45 @@ export class AuthController {
   me(@CurrentUser() user: JwtUser) {
     return this.authService.me(user.userId);
   }
+}
+
+/** Halaman HTML sederhana untuk hasil verifikasi email (dibuka di browser). */
+function renderVerifyPage(
+  ok: boolean,
+  title: string,
+  message: string,
+): string {
+  const color = ok ? '#224820' : '#b3261e';
+  const icon = ok ? '✓' : '✕';
+  const esc = (s: string) =>
+    s.replace(/[&<>"]/g, (c) =>
+      c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : '&quot;',
+    );
+  return `<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>${esc(title)} — SIPRES Kartini</title>
+<style>
+  body { margin:0; font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    background:#f3f4f1; display:flex; min-height:100vh; align-items:center; justify-content:center; }
+  .card { background:#fff; max-width:420px; width:90%; padding:36px 28px; border-radius:16px;
+    box-shadow:0 8px 30px rgba(0,0,0,.08); text-align:center; }
+  .badge { width:72px; height:72px; border-radius:50%; background:${color}; color:#fff;
+    font-size:38px; line-height:72px; margin:0 auto 20px; }
+  h1 { color:${color}; font-size:22px; margin:0 0 10px; }
+  p { color:#444; font-size:15px; line-height:1.5; margin:0; }
+  .brand { margin-top:24px; color:#9aa39a; font-size:13px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">${icon}</div>
+    <h1>${esc(title)}</h1>
+    <p>${esc(message)}</p>
+    <div class="brand">SIPRES Kartini</div>
+  </div>
+</body>
+</html>`;
 }
