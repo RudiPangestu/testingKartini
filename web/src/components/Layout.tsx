@@ -29,11 +29,19 @@ function I({ d }: { d: string }) {
 }
 
 const NAV: NavItem[] = [
+  // --- Orang tua & murid ---
+  { to: '/', label: 'Beranda', roles: ['ORTU', 'MURID'], icon: <I d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10" /> },
+  { to: '/rekap', label: 'Rekap Kehadiran', roles: ['ORTU', 'MURID'], icon: <I d="M3 3v18h18M7 14l3-3 3 3 5-6" /> },
+  { to: '/agenda', label: 'Agenda Kegiatan', roles: ['ORTU', 'MURID'], icon: <I d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 1118 0zM12 7v6M9 10h6" /> },
+  { to: '/notifikasi', label: 'Notifikasi', roles: ['ORTU', 'MURID'], icon: <I d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0" /> },
+  { to: '/profil', label: 'Profil', roles: ['ORTU', 'MURID'], icon: <I d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" /> },
+  // --- Admin & guru ---
   { to: '/', label: 'Dashboard', roles: ['ADMIN', 'GURU'], icon: <I d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10" /> },
   { to: '/attendance', label: 'Presensi', roles: ['ADMIN', 'GURU'], icon: <I d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" /> },
   { to: '/reports', label: 'Laporan', roles: ['ADMIN', 'GURU'], icon: <I d="M3 3v18h18M7 14l3-3 3 3 5-6" /> },
   { to: '/students', label: 'Murid', roles: ['ADMIN', 'GURU'], icon: <I d="M17 20v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 10a4 4 0 100-8 4 4 0 000 8M23 20v-2a4 4 0 00-3-3.87M16 2.13a4 4 0 010 7.75" /> },
   { to: '/classes', label: 'Kelas', roles: ['ADMIN', 'GURU'], icon: <I d="M3 7l9-4 9 4-9 4-9-4zM3 7v6M21 7v6M7 9v5a5 3 0 0010 0V9" /> },
+  { to: '/buku-batas', label: 'Buku Batas', roles: ['ADMIN', 'GURU'], icon: <I d="M4 19.5A2.5 2.5 0 016.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2zM9 7h7M9 11h7" /> },
   { to: '/subjects', label: 'Mata Pelajaran', roles: ['ADMIN'], icon: <I d="M4 19.5A2.5 2.5 0 016.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /> },
   { to: '/schedules', label: 'Jadwal', roles: ['ADMIN'], icon: <I d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" /> },
   { to: '/events', label: 'Kegiatan', roles: ['ADMIN'], icon: <I d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 1118 0zM12 7v6M9 10h6" /> },
@@ -59,6 +67,8 @@ export default function Layout() {
 
   const items = NAV.filter((n) => user && n.roles.includes(user.role));
   const [open, setOpen] = useState(false);
+  const isFamily = user?.role === 'ORTU' || user?.role === 'MURID';
+  const panelLabel = isFamily ? 'Portal Orang Tua & Murid' : 'Panel Admin & Guru';
 
   async function handleLogout() {
     const refreshToken = useAuth.getState().refreshToken;
@@ -118,7 +128,7 @@ export default function Layout() {
             <div className="text-[15px] font-bold text-gray-900">
               SIPRES Kartini
             </div>
-            <div className="text-xs text-gray-400">Panel Admin &amp; Guru</div>
+            <div className="text-xs text-gray-400">{panelLabel}</div>
           </div>
         </div>
 

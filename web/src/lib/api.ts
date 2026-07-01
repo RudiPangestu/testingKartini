@@ -36,6 +36,15 @@ async function doRefresh(): Promise<string> {
   }
 }
 
+// Endpoint auth publik yang TIDAK boleh memicu refresh (cegah loop tak henti).
+const NO_REFRESH_PATHS = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/refresh',
+  '/auth/logout',
+  '/auth/resend-verification',
+];
+
 // Coba refresh token sekali saat 401
 api.interceptors.response.use(
   (res) => res,
@@ -47,7 +56,7 @@ api.interceptors.response.use(
       error.response?.status === 401 &&
       original &&
       !original._retry &&
-      !original.url?.includes('/auth/')
+      !NO_REFRESH_PATHS.some((p) => original.url?.includes(p))
     ) {
       original._retry = true;
       try {

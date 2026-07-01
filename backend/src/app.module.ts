@@ -17,6 +17,7 @@ import { SettingsModule } from './settings/settings.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { ReportsModule } from './reports/reports.module';
+import { LessonLogsModule } from './lesson-logs/lesson-logs.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
 
 @Module({
@@ -38,6 +39,7 @@ import { SchedulerModule } from './scheduler/scheduler.module';
     NotificationsModule,
     AttendanceModule,
     ReportsModule,
+    LessonLogsModule,
     SchedulerModule,
   ],
   providers: [

@@ -16,7 +16,7 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile.offline
+      dockerfile: Dockerfile.offline/
     depends_on:
       db:
         condition: service_healthy

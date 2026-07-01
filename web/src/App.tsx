@@ -17,7 +17,22 @@ import AttendancePage from './pages/AttendancePage';
 import ReportsPage from './pages/ReportsPage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
 import SettingsPage from './pages/SettingsPage';
+import FamilyHomePage from './pages/FamilyHomePage';
+import FamilyReportsPage from './pages/FamilyReportsPage';
+import AgendaPage from './pages/AgendaPage';
+import NotificationsPage from './pages/NotificationsPage';
+import ProfilePage from './pages/ProfilePage';
+import BukuBatasPage from './pages/BukuBatasPage';
+import BukuBatasCetakPage from './pages/BukuBatasCetakPage';
 import type { ReactElement } from 'react';
+
+// Beranda berbeda menurut peran: staf melihat dasbor sekolah, orang tua/murid
+// melihat ringkasan kehadiran anak/dirinya.
+function HomePage() {
+  const role = useAuth((s) => s.user?.role);
+  if (role === 'ORTU' || role === 'MURID') return <FamilyHomePage />;
+  return <DashboardPage />;
+}
 
 function Protected({
   children,
@@ -48,6 +63,15 @@ export default function App() {
         element={user ? <Navigate to="/" replace /> : <RegisterPage />}
       />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
+      {/* Halaman cetak buku batas: full-page tanpa sidebar (untuk print/PDF). */}
+      <Route
+        path="/buku-batas/cetak"
+        element={
+          <Protected roles={['ADMIN', 'GURU']}>
+            <BukuBatasCetakPage />
+          </Protected>
+        }
+      />
       <Route
         element={
           <Protected>
@@ -55,11 +79,79 @@ export default function App() {
           </Protected>
         }
       >
-        <Route path="/" element={<DashboardPage />} />
-        <Route path="/attendance" element={<AttendancePage />} />
-        <Route path="/reports" element={<ReportsPage />} />
-        <Route path="/students" element={<StudentsPage />} />
-        <Route path="/classes" element={<ClassesPage />} />
+        <Route path="/" element={<HomePage />} />
+        <Route
+          path="/attendance"
+          element={
+            <Protected roles={['ADMIN', 'GURU']}>
+              <AttendancePage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <Protected roles={['ADMIN', 'GURU']}>
+              <ReportsPage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/students"
+          element={
+            <Protected roles={['ADMIN', 'GURU']}>
+              <StudentsPage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/classes"
+          element={
+            <Protected roles={['ADMIN', 'GURU']}>
+              <ClassesPage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/buku-batas"
+          element={
+            <Protected roles={['ADMIN', 'GURU']}>
+              <BukuBatasPage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/rekap"
+          element={
+            <Protected roles={['ORTU', 'MURID']}>
+              <FamilyReportsPage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/agenda"
+          element={
+            <Protected roles={['ORTU', 'MURID']}>
+              <AgendaPage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/notifikasi"
+          element={
+            <Protected roles={['ORTU', 'MURID']}>
+              <NotificationsPage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/profil"
+          element={
+            <Protected roles={['ORTU', 'MURID']}>
+              <ProfilePage />
+            </Protected>
+          }
+        />
         <Route
           path="/subjects"
           element={

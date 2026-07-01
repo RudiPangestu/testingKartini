@@ -47,3 +47,8 @@ coverage/
 
 # TS build info
 *.tsbuildinfo
+
+# Dokumen KP / artikel (tidak di-push)
+paper/
+artikel PKM/
+artikel concentech/

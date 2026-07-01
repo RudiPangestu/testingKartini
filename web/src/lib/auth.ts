@@ -15,6 +15,7 @@ interface AuthState {
   refreshToken: string | null;
   setAuth: (data: PersistedAuth) => void;
   setTokens: (accessToken: string, refreshToken: string) => void;
+  setUser: (user: User) => void;
   logout: () => void;
 }
 
@@ -50,6 +51,16 @@ export const useAuth = create<AuthState>((set, get) => ({
       );
     }
     set({ accessToken, refreshToken });
+  },
+  setUser: (user) => {
+    const { accessToken, refreshToken } = get();
+    if (accessToken && refreshToken) {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ user, accessToken, refreshToken }),
+      );
+    }
+    set({ user });
   },
   logout: () => {
     localStorage.removeItem(STORAGE_KEY);

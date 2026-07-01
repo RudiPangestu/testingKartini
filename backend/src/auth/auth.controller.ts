@@ -4,6 +4,7 @@ import {
   Get,
   Header,
   HttpCode,
+  Patch,
   Post,
   Query,
 } from '@nestjs/common';
@@ -12,6 +13,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { RegisterDto } from './dto/register.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { Public } from '../common/decorators/public.decorator';
 import {
   CurrentUser,
@@ -87,6 +89,15 @@ export class AuthController {
   @Get('me')
   me(@CurrentUser() user: JwtUser) {
     return this.authService.me(user.userId);
+  }
+
+  // Update profil sendiri (nama, telepon, ganti password).
+  @Patch('me')
+  updateProfile(
+    @CurrentUser() user: JwtUser,
+    @Body() dto: UpdateProfileDto,
+  ) {
+    return this.authService.updateProfile(user.userId, dto);
   }
 }
 

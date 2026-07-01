@@ -11,6 +11,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../notifications/channels/email.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 function sha256(value: string): string {
   return createHash('sha256').update(value).digest('hex');
@@ -239,6 +240,34 @@ export class AuthService {
       throw new UnauthorizedException();
     }
     return user;
+  }
+
+  /** User mengubah profilnya sendiri: nama, telepon, dan/atau password. */
+  async updateProfile(userId: string, dto: UpdateProfileDto) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    const data: { fullName?: string; phone?: string | null; passwordHash?: string } = {};
+
+    if (dto.fullName !== undefined) data.fullName = dto.fullName;
+    // Telepon kosong dianggap dihapus (null).
+    if (dto.phone !== undefined) data.phone = dto.phone.trim() || null;
+
+    if (dto.newPassword) {
+      const valid = await argon2.verify(
+        user.passwordHash,
+        dto.currentPassword ?? '',
+      );
+      if (!valid) {
+        throw new BadRequestException('Password saat ini salah');
+      }
+      data.passwordHash = await argon2.hash(dto.newPassword);
+    }
+
+    await this.prisma.user.update({ where: { id: userId }, data });
+    return this.me(userId);
   }
 
   private async issueTokens(userId: string, email: string, role: Role) {

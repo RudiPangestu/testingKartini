@@ -86,6 +86,7 @@ model User {
   // Relasi
   homeroomClasses     Class[]              @relation("Homeroom")
   teachingSchedules   Schedule[]           @relation("TeacherSchedule")
+  lessonLogs          LessonLog[]          @relation("LessonLogTeacher")
   studentProfile      Student?             @relation("StudentAccount")
   parentLinks         StudentParent[]      @relation("ParentUser")
   recordedAttendances Attendance[]         @relation("RecordedBy")
@@ -132,6 +133,7 @@ model Class {
   schedules          Schedule[]
   targetedEvents     Event[]             @relation("EventTargetClass")
   attendanceSessions AttendanceSession[]
+  lessonLogs         LessonLog[]
 
   @@index([academicYear])
   @@map("classes")
@@ -181,7 +183,8 @@ model Subject {
   name String
   code String? @unique
 
-  schedules Schedule[]
+  schedules  Schedule[]
+  lessonLogs LessonLog[]
 
   @@map("subjects")
 }
@@ -206,6 +209,37 @@ model Schedule {
   @@index([classId])
   @@index([teacherId])
   @@map("schedules")
+}
+
+// ===================== BUKU BATAS PEMBELAJARAN =====================
+
+// Satu baris = satu pertemuan/sesi mengajar (1 jam pelajaran di 1 kelas),
+// meniru kolom "Buku Batas Pembelajaran" fisik SMA Kartini Batam.
+model LessonLog {
+  id              String   @id @default(uuid())
+  classId         String   @map("class_id")
+  teacherId       String   @map("teacher_id")
+  subjectId       String?  @map("subject_id")
+  date            DateTime // Hari/Tgl pertemuan
+  jamKe           String   @map("jam_ke") // mis. "1-2"
+  namaSiswa       String?  @map("nama_siswa") // kolom opsional sesuai buku asli
+  pokokBahasan    String   @map("pokok_bahasan")
+  metode          String?
+  selesai         Boolean  @default(true) // Selesai (true) / Belum (false)
+  siswaTidakHadir String?  @map("siswa_tidak_hadir") // prefill dari presensi, bisa diedit
+  refleksi        String?
+  tindakLanjut    String?  @map("tindak_lanjut")
+  academicYear    String   @map("academic_year") // Tahun Pembelajaran (mis. "2025/2026")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  class   Class    @relation(fields: [classId], references: [id])
+  teacher User     @relation("LessonLogTeacher", fields: [teacherId], references: [id])
+  subject Subject? @relation(fields: [subjectId], references: [id])
+
+  @@index([classId, date])
+  @@index([teacherId])
+  @@map("lesson_logs")
 }
 
 // ===================== KEGIATAN =====================

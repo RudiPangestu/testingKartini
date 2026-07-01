@@ -122,6 +122,52 @@ export interface ReportResult {
   studentName?: string;
 }
 
+export interface AttendanceHistoryItem {
+  id: string;
+  status: AttendanceStatus;
+  note: string | null;
+  recordedAt: string;
+  session: {
+    sessionDate: string;
+    schedule?: { subject: { name: string } } | null;
+    event?: { title: string } | null;
+  };
+}
+
+export interface NotificationItem {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  isRead: boolean;
+  sentAt: string;
+}
+
+export interface LessonLog {
+  id: string;
+  classId: string;
+  teacherId: string;
+  subjectId: string | null;
+  date: string;
+  jamKe: string;
+  namaSiswa: string | null;
+  pokokBahasan: string;
+  metode: string | null;
+  selesai: boolean;
+  siswaTidakHadir: string | null;
+  refleksi: string | null;
+  tindakLanjut: string | null;
+  academicYear: string;
+  subject?: { id: string; name: string } | null;
+  teacher?: { id: string; fullName: string };
+  class?: { id: string; name: string; academicYear: string };
+}
+
+export interface AbsentSuggestion {
+  items: { name: string; status: AttendanceStatus }[];
+  text: string;
+}
+
 export interface Paginated<T> {
   data: T[];
   meta: { total: number; page: number; limit: number };
