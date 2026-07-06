@@ -3,12 +3,8 @@
 # Render membaca file ini, membuat database + web service otomatis.
 # Dokumentasi: https://render.com/docs/blueprint-spec
 
-databases:
-  - name: sipres-db
-    databaseName: sipres
-    user: sipres
-    plan: free
-    region: singapore
+# Database tidak lagi memakai Render (dipindah ke Neon).
+# DATABASE_URL diisi manual di dashboard Render dengan connection string Neon.
 
 services:
   - type: web
@@ -20,10 +16,9 @@ services:
     dockerContext: ./backend
     # Perintah start (migrasi + seed + jalankan API) diatur di CMD Dockerfile.
     envVars:
+      # DATABASE_URL = connection string Neon (pooled). Diisi di dashboard.
       - key: DATABASE_URL
-        fromDatabase:
-          name: sipres-db
-          property: connectionString
+        sync: false
       - key: NODE_ENV
         value: production
       # Secret JWT digenerate otomatis oleh Render (kuat & acak).
