@@ -85,8 +85,19 @@ export default function StudentsPage() {
       }),
     onSuccess: () => {
       toast.push('success', 'Orang tua ditautkan');
+      qc.invalidateQueries({ queryKey: ['students'] });
       setLinkFor(null);
       setParentId('');
+    },
+    onError: (e) => toast.push('error', apiError(e)),
+  });
+
+  const unlink = useMutation({
+    mutationFn: (v: { studentId: string; parentUserId: string }) =>
+      api.delete(`/students/${v.studentId}/parents/${v.parentUserId}`),
+    onSuccess: () => {
+      toast.push('success', 'Tautan orang tua dilepas');
+      qc.invalidateQueries({ queryKey: ['students'] });
     },
     onError: (e) => toast.push('error', apiError(e)),
   });
@@ -145,6 +156,7 @@ export default function StudentsPage() {
                 <th className="px-4 py-3">Nama</th>
                 <th className="px-4 py-3">Kelas</th>
                 <th className="px-4 py-3">JK</th>
+                <th className="px-4 py-3">Orang Tua/Wali</th>
                 <th className="px-4 py-3 text-right">Aksi</th>
               </tr>
             </thead>
@@ -155,6 +167,46 @@ export default function StudentsPage() {
                   <td className="px-4 py-3 font-medium">{s.fullName}</td>
                   <td className="px-4 py-3">{s.class?.name ?? '—'}</td>
                   <td className="px-4 py-3">{s.gender ?? '—'}</td>
+                  <td className="px-4 py-3">
+                    {s.parents && s.parents.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {s.parents.map((p) => (
+                          <span
+                            key={p.id}
+                            className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800"
+                            title={p.parent.email}
+                          >
+                            {p.parent.fullName}
+                            {p.relation ? ` (${p.relation})` : ''}
+                            {isAdmin && (
+                              <button
+                                type="button"
+                                className="ml-0.5 text-green-700 hover:text-red-600"
+                                title="Lepas tautan"
+                                onClick={() => {
+                                  if (
+                                    confirm(
+                                      `Lepas tautan ${p.parent.fullName} dari ${s.fullName}?`,
+                                    )
+                                  )
+                                    unlink.mutate({
+                                      studentId: s.id,
+                                      parentUserId: p.parentUserId,
+                                    });
+                                }}
+                              >
+                                ×
+                              </button>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                        Belum ditautkan
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     {isAdmin && (
                       <>

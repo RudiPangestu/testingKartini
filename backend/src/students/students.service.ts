@@ -35,7 +35,16 @@ export class StudentsService {
     const [data, total] = await Promise.all([
       this.prisma.student.findMany({
         where,
-        include: { class: { select: { id: true, name: true } } },
+        include: {
+          class: { select: { id: true, name: true } },
+          // Sertakan tautan akun orang tua agar tabel murid bisa menampilkan
+          // status "sudah/belum ditautkan" beserta akun ortu yang ditautkan.
+          parents: {
+            include: {
+              parent: { select: { id: true, fullName: true, email: true } },
+            },
+          },
+        },
         orderBy: { fullName: 'asc' },
         skip: (page - 1) * limit,
         take: limit,

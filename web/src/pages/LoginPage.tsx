@@ -21,12 +21,8 @@ export default function LoginPage() {
         email,
         password,
       });
-      const { user } = res.data;
-      if (user.role !== 'ADMIN' && user.role !== 'GURU') {
-        setError('Panel ini hanya untuk Admin & Guru. Gunakan aplikasi mobile.');
-        setLoading(false);
-        return;
-      }
+      // Semua peran (Admin, Guru, Orang Tua, Murid) dapat masuk lewat web.
+      // Halaman ditentukan menurut peran setelah login.
       setAuth(res.data);
       navigate('/');
     } catch (err) {
@@ -40,7 +36,9 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold text-brand-600">SIPRES Kartini</h1>
-          <p className="text-sm text-gray-500">Panel Admin &amp; Guru</p>
+          <p className="text-sm text-gray-500">
+            Sistem Presensi &amp; Kegiatan Sekolah
+          </p>
         </div>
         <form onSubmit={onSubmit} className="card space-y-4">
           {error && (

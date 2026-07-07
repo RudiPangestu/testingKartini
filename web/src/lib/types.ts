@@ -26,6 +26,13 @@ export interface SchoolClass {
   _count?: { students: number };
 }
 
+export interface StudentParentLink {
+  id: string;
+  parentUserId: string;
+  relation: string | null;
+  parent: { id: string; fullName: string; email: string };
+}
+
 export interface Student {
   id: string;
   nisn: string;
@@ -36,6 +43,7 @@ export interface Student {
   birthDate?: string | null;
   address?: string | null;
   class?: { id: string; name: string } | null;
+  parents?: StudentParentLink[];
 }
 
 export interface Subject {
