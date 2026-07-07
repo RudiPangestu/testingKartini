@@ -206,6 +206,23 @@ export class GradesService {
     const book = await this.getBookOrThrow(bookId);
     this.assertOwner(book, user);
 
+    // Integritas: setiap KD harus milik buku ini & setiap siswa anggota kelas
+    // buku ini (cegah nilai "nyasar" ke KD/siswa lain lewat API).
+    const kdIds = new Set(book.kds.map((k) => k.id));
+    const classStudents = await this.prisma.student.findMany({
+      where: { classId: book.classId },
+      select: { id: true },
+    });
+    const studentIds = new Set(classStudents.map((s) => s.id));
+    for (const it of dto.items) {
+      if (!kdIds.has(it.kdId)) {
+        throw new BadRequestException('KD tidak termasuk dalam buku nilai ini');
+      }
+      if (!studentIds.has(it.studentId)) {
+        throw new BadRequestException('Siswa bukan anggota kelas buku nilai ini');
+      }
+    }
+
     const ops: Prisma.PrismaPromise<unknown>[] = [];
     for (const it of dto.items) {
       const key = {

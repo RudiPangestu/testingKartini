@@ -150,8 +150,8 @@ export default function DaftarHadirPage() {
             <table className="table whitespace-nowrap text-sm">
               <thead>
                 <tr>
-                  <th className="sticky left-0 bg-gray-50">No</th>
-                  <th className="sticky left-0 bg-gray-50">Nama</th>
+                  <th className="bg-gray-50">No</th>
+                  <th className="sticky left-0 z-10 bg-gray-50">Nama</th>
                   {matrix.sessions.map((s, i) => (
                     <th key={s.id} title={`${s.date} — ${s.subject}`}>
                       {i + 1}
@@ -166,8 +166,8 @@ export default function DaftarHadirPage() {
               <tbody>
                 {matrix.rows.map((r, idx) => (
                   <tr key={r.studentId}>
-                    <td className="sticky left-0 bg-white">{idx + 1}</td>
-                    <td className="sticky left-0 bg-white font-medium">
+                    <td>{idx + 1}</td>
+                    <td className="sticky left-0 z-10 bg-white font-medium">
                       {r.fullName}
                     </td>
                     {matrix.sessions.map((s) => {

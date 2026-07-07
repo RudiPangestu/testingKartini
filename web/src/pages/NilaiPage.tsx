@@ -28,6 +28,14 @@ function predikat(n: number | null): Predikat {
   if (n >= 56) return 'C';
   return 'D';
 }
+/** Parse input sel: dukung koma desimal; null bila kosong/bukan angka. */
+function toNum(raw: string | undefined): number | null {
+  if (raw == null) return null;
+  const v = raw.trim().replace(',', '.');
+  if (v === '') return null;
+  const n = Number(v);
+  return Number.isNaN(n) ? null : n;
+}
 const cellKey = (
   kdId: string,
   studentId: string,
@@ -60,8 +68,8 @@ export default function NilaiPage() {
   const [cells, setCells] = useState<Record<string, string>>({});
   // Jumlah kolom per (kdId|komponen).
   const [cols, setCols] = useState<Record<string, number>>({});
-  // Key sel yang sudah tersimpan di server (untuk deteksi penghapusan).
-  const [savedKeys, setSavedKeys] = useState<Set<string>>(new Set());
+  // Nilai sel yang sudah tersimpan (key -> string) untuk deteksi perubahan/hapus.
+  const [savedValues, setSavedValues] = useState<Record<string, string>>({});
 
   const ready = !!classId && !!subjectId && !!academicYear && !!cawu;
 
@@ -90,12 +98,12 @@ export default function NilaiPage() {
     const data = fullQuery.data;
     if (!data) return;
     const c: Record<string, string> = {};
-    const keys = new Set<string>();
+    const saved: Record<string, string> = {};
     const colCount: Record<string, number> = {};
     for (const s of data.scores) {
       const k = cellKey(s.kdId, s.studentId, s.komponen, s.urutan);
       c[k] = String(s.nilai);
-      keys.add(k);
+      saved[k] = String(s.nilai);
       const ck = `${s.kdId}|${s.komponen}`;
       colCount[ck] = Math.max(colCount[ck] ?? 0, s.urutan);
     }
@@ -107,7 +115,7 @@ export default function NilaiPage() {
       }
     }
     setCells(c);
-    setSavedKeys(keys);
+    setSavedValues(saved);
     setCols(colCount);
     setActiveKd((prev) =>
       prev && data.book.kds.some((k) => k.id === prev)
@@ -164,7 +172,7 @@ export default function NilaiPage() {
   }
   function addCol(kdId: string, komp: GradeComponent) {
     const ck = `${kdId}|${komp}`;
-    setCols((p) => ({ ...p, [ck]: (p[ck] ?? 2) + 1 }));
+    setCols((p) => ({ ...p, [ck]: Math.min((p[ck] ?? 2) + 1, 20) }));
   }
   function removeCol(kdId: string, komp: GradeComponent) {
     const ck = `${kdId}|${komp}`;
@@ -183,43 +191,40 @@ export default function NilaiPage() {
   function handleSave() {
     if (!bookId) return;
     const items: ScoreItem[] = [];
-    const seen = new Set<string>();
-    // Sel yang terisi angka -> upsert.
-    for (const [k, v] of Object.entries(cells)) {
-      seen.add(k);
+    const invalid: string[] = [];
+    const parse = (k: string) => {
       const [kdId, studentId, komponen, urutan] = k.split('|');
-      const num = v.trim() === '' ? null : Number(v);
-      if (num === null || Number.isNaN(num)) {
-        if (savedKeys.has(k))
-          items.push({
-            kdId,
-            studentId,
-            komponen: komponen as GradeComponent,
-            urutan: Number(urutan),
-            nilai: null,
-          });
+      return { kdId, studentId, komponen: komponen as GradeComponent, urutan: Number(urutan) };
+    };
+
+    // Bandingkan tiap sel di grid dengan nilai tersimpan → kirim yang berubah.
+    for (const [k, raw] of Object.entries(cells)) {
+      const had = k in savedValues;
+      const v = (raw ?? '').trim();
+      if (v === '') {
+        if (had) items.push({ ...parse(k), nilai: null }); // sel dikosongkan
         continue;
       }
-      items.push({
-        kdId,
-        studentId,
-        komponen: komponen as GradeComponent,
-        urutan: Number(urutan),
-        nilai: num,
-      });
-    }
-    // Sel yang dulu tersimpan tapi kini hilang -> hapus.
-    for (const k of savedKeys) {
-      if (!seen.has(k)) {
-        const [kdId, studentId, komponen, urutan] = k.split('|');
-        items.push({
-          kdId,
-          studentId,
-          komponen: komponen as GradeComponent,
-          urutan: Number(urutan),
-          nilai: null,
-        });
+      const n = toNum(raw);
+      if (n === null || n < 0 || n > 100) {
+        invalid.push(v);
+        continue;
       }
+      if (!had || Number(savedValues[k]) !== n) items.push({ ...parse(k), nilai: n });
+    }
+    // Sel tersimpan yang kolomnya dihapus → hapus di server.
+    for (const k of Object.keys(savedValues)) {
+      if (!(k in cells)) items.push({ ...parse(k), nilai: null });
+    }
+
+    if (invalid.length) {
+      toast.push(
+        'error',
+        `${invalid.length} nilai tidak valid (harus angka 0–100): ${invalid
+          .slice(0, 5)
+          .join(', ')}`,
+      );
+      return;
     }
     if (!items.length) {
       toast.push('success', 'Tidak ada perubahan');
@@ -242,9 +247,8 @@ export default function NilaiPage() {
     const count = cols[`${kd.id}|${komp}`] ?? 2;
     const vals: number[] = [];
     for (let u = 1; u <= count; u++) {
-      const raw = cells[cellKey(kd.id, studentId, komp, u)];
-      if (raw != null && raw.trim() !== '' && !Number.isNaN(Number(raw)))
-        vals.push(Number(raw));
+      const n = toNum(cells[cellKey(kd.id, studentId, komp, u)]);
+      if (n !== null) vals.push(n);
     }
     return avg(vals);
   }
@@ -458,8 +462,8 @@ export default function NilaiPage() {
                   <table className="table whitespace-nowrap text-sm">
                     <thead>
                       <tr>
-                        <th className="sticky left-0 bg-gray-50">No</th>
-                        <th className="sticky left-0 bg-gray-50">Nama</th>
+                        <th className="bg-gray-50">No</th>
+                        <th className="sticky left-0 z-10 bg-gray-50">Nama</th>
                         {Array.from({ length: pCols }, (_, i) => (
                           <th key={`p${i}`} className="bg-blue-50">
                             P{i + 1}
@@ -483,8 +487,8 @@ export default function NilaiPage() {
                         const nkd = liveKd(st.id);
                         return (
                           <tr key={st.id}>
-                            <td className="sticky left-0 bg-white">{idx + 1}</td>
-                            <td className="sticky left-0 bg-white font-medium">
+                            <td>{idx + 1}</td>
+                            <td className="sticky left-0 z-10 bg-white font-medium">
                               {st.fullName}
                             </td>
                             {Array.from({ length: pCols }, (_, i) => {
@@ -547,6 +551,10 @@ function RekapView({ full }: { full: GradeBookFull }) {
   const s = full.stats;
   return (
     <div className="card overflow-x-auto p-0">
+      <div className="border-b border-gray-100 p-3 text-xs italic text-gray-400">
+        Rekap menampilkan data yang sudah tersimpan. Simpan dulu perubahan di tab
+        Input Nilai bila belum.
+      </div>
       <table className="table whitespace-nowrap text-sm">
         <thead>
           <tr>
