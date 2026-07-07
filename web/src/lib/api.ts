@@ -4,8 +4,12 @@ import axios, {
 } from 'axios';
 import { authStore, useAuth } from './auth';
 
+// Dev: pakai path relatif '/api/v1' (diproxy Vite ke backend).
+// Produksi: set VITE_API_URL ke URL absolut backend saat build.
+export const API_BASE = import.meta.env.VITE_API_URL ?? '/api/v1';
+
 export const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: API_BASE,
 });
 
 // Sisipkan access token ke setiap request
@@ -26,7 +30,7 @@ async function doRefresh(): Promise<string> {
     throw new Error('no refresh token');
   }
   try {
-    const res = await axios.post('/api/v1/auth/refresh', { refreshToken });
+    const res = await axios.post(`${API_BASE}/auth/refresh`, { refreshToken });
     const { accessToken, refreshToken: newRefresh } = res.data;
     setTokens(accessToken, newRefresh ?? refreshToken);
     return accessToken;
