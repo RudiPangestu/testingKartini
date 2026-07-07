@@ -24,6 +24,10 @@ import NotificationsPage from './pages/NotificationsPage';
 import ProfilePage from './pages/ProfilePage';
 import BukuBatasPage from './pages/BukuBatasPage';
 import BukuBatasCetakPage from './pages/BukuBatasCetakPage';
+import NilaiPage from './pages/NilaiPage';
+import NilaiCetakPage from './pages/NilaiCetakPage';
+import DaftarHadirPage from './pages/DaftarHadirPage';
+import DaftarHadirCetakPage from './pages/DaftarHadirCetakPage';
 import type { ReactElement } from 'react';
 
 // Beranda berbeda menurut peran: staf melihat dasbor sekolah, orang tua/murid
@@ -63,12 +67,28 @@ export default function App() {
         element={user ? <Navigate to="/" replace /> : <RegisterPage />}
       />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
-      {/* Halaman cetak buku batas: full-page tanpa sidebar (untuk print/PDF). */}
+      {/* Halaman cetak: full-page tanpa sidebar (untuk print/PDF). */}
       <Route
         path="/buku-batas/cetak"
         element={
           <Protected roles={['ADMIN', 'GURU']}>
             <BukuBatasCetakPage />
+          </Protected>
+        }
+      />
+      <Route
+        path="/nilai/cetak"
+        element={
+          <Protected roles={['ADMIN', 'GURU']}>
+            <NilaiCetakPage />
+          </Protected>
+        }
+      />
+      <Route
+        path="/daftar-hadir/cetak"
+        element={
+          <Protected roles={['ADMIN', 'GURU']}>
+            <DaftarHadirCetakPage />
           </Protected>
         }
       />
@@ -117,6 +137,22 @@ export default function App() {
           element={
             <Protected roles={['ADMIN', 'GURU']}>
               <BukuBatasPage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/nilai"
+          element={
+            <Protected roles={['ADMIN', 'GURU']}>
+              <NilaiPage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/daftar-hadir"
+          element={
+            <Protected roles={['ADMIN', 'GURU']}>
+              <DaftarHadirPage />
             </Protected>
           }
         />

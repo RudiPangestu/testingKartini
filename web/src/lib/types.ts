@@ -168,6 +168,88 @@ export interface AbsentSuggestion {
   text: string;
 }
 
+// ---------- Daftar Nilai (Daflai) ----------
+
+export type GradeComponent = 'PENGETAHUAN' | 'PRAKTEK';
+export type Predikat = 'A' | 'B' | 'C' | 'D' | null;
+
+export interface GradeKd {
+  id: string;
+  gradeBookId: string;
+  nomor: number;
+  deskripsi: string | null;
+}
+
+export interface GradeBook {
+  id: string;
+  classId: string;
+  subjectId: string;
+  teacherId: string;
+  academicYear: string;
+  cawu: number;
+  kkm: number;
+  kds: GradeKd[];
+  class?: { id: string; name: string; academicYear: string };
+  subject?: { id: string; name: string };
+  teacher?: { id: string; fullName: string };
+}
+
+export interface GradeScore {
+  id: string;
+  gradeBookId: string;
+  kdId: string;
+  studentId: string;
+  komponen: GradeComponent;
+  urutan: number;
+  nilai: number;
+}
+
+export interface GradeKdResult {
+  kdId: string;
+  nomor: number;
+  naPengetahuan: number | null;
+  naPraktek: number | null;
+  nilaiKd: number | null;
+  predikat: Predikat;
+}
+
+export interface GradeStudentSummary {
+  studentId: string;
+  nis: string | null;
+  nisn: string;
+  fullName: string;
+  kd: GradeKdResult[];
+  nr: number | null;
+  predikat: Predikat;
+  tuntas: boolean | null;
+}
+
+export interface GradeStats {
+  jumlahSiswa: number;
+  jumlahDinilai: number;
+  jumlahTuntas: number;
+  rataKelas: number | null;
+  dayaSerap: number | null;
+  targetKurikulum: number | null;
+}
+
+export interface GradeBookFull {
+  book: GradeBook;
+  students: { id: string; nis: string | null; nisn: string; fullName: string }[];
+  scores: GradeScore[];
+  summary: GradeStudentSummary[];
+  stats: GradeStats;
+}
+
+// Satu sel nilai yang dikirim ke backend (nilai null = hapus).
+export interface ScoreItem {
+  kdId: string;
+  studentId: string;
+  komponen: GradeComponent;
+  urutan: number;
+  nilai: number | null;
+}
+
 export interface Paginated<T> {
   data: T[];
   meta: { total: number; page: number; limit: number };
