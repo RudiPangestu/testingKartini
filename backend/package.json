@@ -4,6 +4,7 @@
   "description": "Backend API SIPRES Kartini - Sistem Presensi SMA Kartini Batam",
   "license": "MIT",
   "scripts": {
+    "prebuild": "rm -rf dist tsconfig.build.tsbuildinfo",
     "build": "nest build",
     "start": "nest start",
     "start:dev": "nest start --watch",
