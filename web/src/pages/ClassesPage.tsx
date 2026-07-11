@@ -5,6 +5,7 @@ import { useToast } from '../components/Toast';
 import { useTeachers } from '../lib/hooks';
 import { EmptyState, Field, Modal, PageHeader, Spinner } from '../components/ui';
 import { useAuth } from '../lib/auth';
+import ImportModal from '../components/ImportModal';
 import type { Paginated, SchoolClass, Student } from '../lib/types';
 
 interface FormState {
@@ -29,6 +30,7 @@ export default function ClassesPage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [viewClass, setViewClass] = useState<SchoolClass | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const list = useQuery({
     queryKey: ['classes'],
@@ -77,15 +79,20 @@ export default function ClassesPage() {
         subtitle="Daftar rombongan belajar"
         action={
           isAdmin && (
-            <button
-              className="btn-primary"
-              onClick={() => {
-                setForm(EMPTY);
-                setOpen(true);
-              }}
-            >
-              + Tambah Kelas
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button className="btn-ghost" onClick={() => setImportOpen(true)}>
+                Impor Excel
+              </button>
+              <button
+                className="btn-primary"
+                onClick={() => {
+                  setForm(EMPTY);
+                  setOpen(true);
+                }}
+              >
+                + Tambah Kelas
+              </button>
+            </div>
           )
         }
       />
@@ -237,6 +244,19 @@ export default function ClassesPage() {
           </ul>
         )}
       </Modal>
+
+      <ImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        entity="classes"
+        title="Impor Kelas"
+        columns={['Nama Kelas', 'Tingkat', 'Tahun Ajaran']}
+        note="Tingkat diisi angka (mis. 10). Kelas dengan nama + tahun ajaran yang sama akan dilewati."
+        onDone={() => {
+          qc.invalidateQueries({ queryKey: ['classes'] });
+          qc.invalidateQueries({ queryKey: ['lookup-classes'] });
+        }}
+      />
     </div>
   );
 }

@@ -19,6 +19,7 @@ import { AttendanceModule } from './attendance/attendance.module';
 import { ReportsModule } from './reports/reports.module';
 import { LessonLogsModule } from './lesson-logs/lesson-logs.module';
 import { GradesModule } from './grades/grades.module';
+import { ImportModule } from './import/import.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
 
 @Module({
@@ -42,6 +43,7 @@ import { SchedulerModule } from './scheduler/scheduler.module';
     ReportsModule,
     LessonLogsModule,
     GradesModule,
+    ImportModule,
     SchedulerModule,
   ],
   providers: [

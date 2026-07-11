@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, apiError } from '../lib/api';
 import { useToast } from '../components/Toast';
 import { EmptyState, Field, Modal, PageHeader, Spinner } from '../components/ui';
+import { useAuth } from '../lib/auth';
+import ImportModal from '../components/ImportModal';
 import type { Subject } from '../lib/types';
 
 interface FormState {
@@ -15,8 +17,10 @@ const EMPTY: FormState = { name: '', code: '' };
 export default function SubjectsPage() {
   const qc = useQueryClient();
   const toast = useToast();
+  const isAdmin = useAuth((s) => s.user?.role === 'ADMIN');
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY);
+  const [importOpen, setImportOpen] = useState(false);
 
   const list = useQuery({
     queryKey: ['subjects'],
@@ -53,15 +57,22 @@ export default function SubjectsPage() {
       <PageHeader
         title="Mata Pelajaran"
         action={
-          <button
-            className="btn-primary"
-            onClick={() => {
-              setForm(EMPTY);
-              setOpen(true);
-            }}
-          >
-            + Tambah Mapel
-          </button>
+          <div className="flex flex-wrap gap-2">
+            {isAdmin && (
+              <button className="btn-ghost" onClick={() => setImportOpen(true)}>
+                Impor Excel
+              </button>
+            )}
+            <button
+              className="btn-primary"
+              onClick={() => {
+                setForm(EMPTY);
+                setOpen(true);
+              }}
+            >
+              + Tambah Mapel
+            </button>
+          </div>
         }
       />
       <div className="card overflow-x-auto p-0">
@@ -141,6 +152,19 @@ export default function SubjectsPage() {
           </button>
         </div>
       </Modal>
+
+      <ImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        entity="subjects"
+        title="Impor Mata Pelajaran"
+        columns={['Nama Mapel', 'Kode']}
+        note="Kode opsional (harus unik). Mapel dengan kode/nama yang sama akan dilewati."
+        onDone={() => {
+          qc.invalidateQueries({ queryKey: ['subjects'] });
+          qc.invalidateQueries({ queryKey: ['lookup-subjects'] });
+        }}
+      />
     </div>
   );
 }

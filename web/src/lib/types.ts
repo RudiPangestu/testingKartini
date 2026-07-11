@@ -258,6 +258,15 @@ export interface ScoreItem {
   nilai: number | null;
 }
 
+// ---------- Impor massal (Excel) ----------
+export interface ImportResult {
+  total: number;
+  created: number;
+  skipped: number;
+  linked?: number;
+  errors: { row: number; message: string }[];
+}
+
 export interface Paginated<T> {
   data: T[];
   meta: { total: number; page: number; limit: number };

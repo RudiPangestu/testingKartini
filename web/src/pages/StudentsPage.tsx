@@ -5,6 +5,7 @@ import { useToast } from '../components/Toast';
 import { useClasses, useParents } from '../lib/hooks';
 import { EmptyState, Field, Modal, PageHeader, Spinner } from '../components/ui';
 import { useAuth } from '../lib/auth';
+import ImportModal from '../components/ImportModal';
 import type { Paginated, Student } from '../lib/types';
 
 interface FormState {
@@ -36,6 +37,7 @@ export default function StudentsPage() {
   const [linkFor, setLinkFor] = useState<Student | null>(null);
   const [parentId, setParentId] = useState('');
   const [relation, setRelation] = useState('ibu');
+  const [importOpen, setImportOpen] = useState(false);
 
   const list = useQuery({
     queryKey: ['students', classFilter, search],
@@ -109,15 +111,20 @@ export default function StudentsPage() {
         subtitle="Data murid & penautan orang tua/wali"
         action={
           isAdmin && (
-            <button
-              className="btn-primary"
-              onClick={() => {
-                setForm(EMPTY);
-                setOpen(true);
-              }}
-            >
-              + Tambah Murid
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button className="btn-ghost" onClick={() => setImportOpen(true)}>
+                Impor Excel
+              </button>
+              <button
+                className="btn-primary"
+                onClick={() => {
+                  setForm(EMPTY);
+                  setOpen(true);
+                }}
+              >
+                + Tambah Murid
+              </button>
+            </div>
           )
         }
       />
@@ -363,6 +370,19 @@ export default function StudentsPage() {
           </button>
         </div>
       </Modal>
+
+      <ImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        entity="students"
+        title="Impor Murid"
+        columns={['NISN', 'NIS', 'Nama', 'Kelas', 'JK']}
+        note="Kolom Kelas dirujuk berdasarkan nama — pastikan kelasnya sudah dibuat lebih dulu. JK diisi L atau P."
+        onDone={() => {
+          qc.invalidateQueries({ queryKey: ['students'] });
+          qc.invalidateQueries({ queryKey: ['classes'] });
+        }}
+      />
     </div>
   );
 }

@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, apiError } from '../lib/api';
 import { useToast } from '../components/Toast';
 import { EmptyState, Field, Modal, PageHeader, Spinner } from '../components/ui';
+import { useAuth } from '../lib/auth';
+import ImportModal from '../components/ImportModal';
 import type { Paginated, Role, User } from '../lib/types';
 
 const ROLES: Role[] = ['ADMIN', 'GURU', 'ORTU', 'MURID'];
@@ -29,10 +31,12 @@ const EMPTY: FormState = {
 export default function UsersPage() {
   const qc = useQueryClient();
   const toast = useToast();
+  const isAdmin = useAuth((s) => s.user?.role === 'ADMIN');
   const [roleFilter, setRoleFilter] = useState('');
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY);
+  const [importOpen, setImportOpen] = useState(false);
 
   const list = useQuery({
     queryKey: ['users', roleFilter, search],
@@ -97,9 +101,16 @@ export default function UsersPage() {
         title="Pengguna"
         subtitle="Kelola akun Admin, Guru, Orang Tua, dan Murid"
         action={
-          <button className="btn-primary" onClick={openCreate}>
-            + Tambah Pengguna
-          </button>
+          <div className="flex flex-wrap gap-2">
+            {isAdmin && (
+              <button className="btn-ghost" onClick={() => setImportOpen(true)}>
+                Impor Ortu (Excel)
+              </button>
+            )}
+            <button className="btn-primary" onClick={openCreate}>
+              + Tambah Pengguna
+            </button>
+          </div>
         }
       />
 
@@ -251,6 +262,20 @@ export default function UsersPage() {
           </button>
         </div>
       </Modal>
+
+      <ImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        entity="parents"
+        title="Impor Akun Orang Tua"
+        columns={['Nama Orang Tua', 'Email', 'No. HP', 'Password', 'NISN Anak', 'Hubungan']}
+        note="Tiap baris membuat akun ortu (password wajib untuk akun baru) lalu menautkannya ke murid via NISN Anak. Email yang sudah ada dipakai ulang untuk anak berikutnya."
+        onDone={() => {
+          qc.invalidateQueries({ queryKey: ['users'] });
+          qc.invalidateQueries({ queryKey: ['students'] });
+          qc.invalidateQueries({ queryKey: ['lookup-parents'] });
+        }}
+      />
     </div>
   );
 }
