@@ -4,8 +4,9 @@ import { api, apiError } from '../lib/api';
 import { useToast } from '../components/Toast';
 import { EmptyState, Field, Modal, PageHeader, Spinner } from '../components/ui';
 import { useAuth } from '../lib/auth';
+import { useClasses, useTeachers } from '../lib/hooks';
 import ImportModal from '../components/ImportModal';
-import type { Subject } from '../lib/types';
+import type { Subject, SubjectTeacher } from '../lib/types';
 
 interface FormState {
   id?: string;
@@ -21,6 +22,8 @@ export default function SubjectsPage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [importOpen, setImportOpen] = useState(false);
+  // Mapel yang sedang dikelola penugasan gurunya (null = modal tertutup).
+  const [assignSubject, setAssignSubject] = useState<Subject | null>(null);
 
   const list = useQuery({
     queryKey: ['subjects'],
@@ -97,6 +100,12 @@ export default function SubjectsPage() {
                   <td className="px-4 py-3 text-right">
                     <button
                       className="action-btn action-edit"
+                      onClick={() => setAssignSubject(s)}
+                    >
+                      Guru
+                    </button>
+                    <button
+                      className="action-btn action-edit"
                       onClick={() => {
                         setForm({ id: s.id, name: s.name, code: s.code ?? '' });
                         setOpen(true);
@@ -165,6 +174,133 @@ export default function SubjectsPage() {
           qc.invalidateQueries({ queryKey: ['lookup-subjects'] });
         }}
       />
+
+      {assignSubject && (
+        <TeacherAssignModal
+          subject={assignSubject}
+          onClose={() => setAssignSubject(null)}
+        />
+      )}
     </div>
+  );
+}
+
+// Modal kelola guru pengampu sebuah mapel per kelas. Satu mapel bisa banyak
+// guru; mapel yang sama bisa diampu guru berbeda di kelas yang berbeda.
+function TeacherAssignModal({
+  subject,
+  onClose,
+}: {
+  subject: Subject;
+  onClose: () => void;
+}) {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const teachers = useTeachers();
+  const classes = useClasses();
+  const [classId, setClassId] = useState('');
+  const [teacherId, setTeacherId] = useState('');
+
+  const key = ['subject-teachers', subject.id];
+  const list = useQuery({
+    queryKey: key,
+    queryFn: async () =>
+      (await api.get<SubjectTeacher[]>(`/subjects/${subject.id}/teachers`)).data,
+  });
+
+  const assign = useMutation({
+    mutationFn: () =>
+      api.post(`/subjects/${subject.id}/teachers`, { classId, teacherId }),
+    onSuccess: () => {
+      toast.push('success', 'Guru ditugaskan');
+      setTeacherId('');
+      qc.invalidateQueries({ queryKey: key });
+    },
+    onError: (e) => toast.push('error', apiError(e)),
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => api.delete(`/subjects/teachers/${id}`),
+    onSuccess: () => {
+      toast.push('success', 'Penugasan dihapus');
+      qc.invalidateQueries({ queryKey: key });
+    },
+    onError: (e) => toast.push('error', apiError(e)),
+  });
+
+  return (
+    <Modal open title={`Guru Pengampu — ${subject.name}`} onClose={onClose}>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Field label="Kelas">
+          <select
+            className="input"
+            value={classId}
+            onChange={(e) => setClassId(e.target.value)}
+          >
+            <option value="">— Pilih kelas —</option>
+            {classes.data?.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Guru">
+          <select
+            className="input"
+            value={teacherId}
+            onChange={(e) => setTeacherId(e.target.value)}
+          >
+            <option value="">— Pilih guru —</option>
+            {teachers.data?.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.fullName}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
+      <div className="mb-4 flex justify-end">
+        <button
+          className="btn-primary"
+          disabled={!classId || !teacherId || assign.isPending}
+          onClick={() => assign.mutate()}
+        >
+          + Tugaskan
+        </button>
+      </div>
+
+      {list.isLoading ? (
+        <Spinner />
+      ) : !list.data?.length ? (
+        <EmptyState message="Belum ada guru yang ditugaskan pada mapel ini." />
+      ) : (
+        <table className="table">
+          <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
+            <tr>
+              <th className="px-3 py-2">Kelas</th>
+              <th className="px-3 py-2">Guru</th>
+              <th className="px-3 py-2 text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {list.data.map((a) => (
+              <tr key={a.id}>
+                <td className="px-3 py-2">{a.class.name}</td>
+                <td className="px-3 py-2 font-medium">{a.teacher.fullName}</td>
+                <td className="px-3 py-2 text-right">
+                  <button
+                    className="action-btn action-danger"
+                    onClick={() => remove.mutate(a.id)}
+                  >
+                    Hapus
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </Modal>
   );
 }
