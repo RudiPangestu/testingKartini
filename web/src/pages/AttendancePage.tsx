@@ -10,13 +10,17 @@ import type {
   Student,
 } from '../lib/types';
 
-const STATUSES: AttendanceStatus[] = ['HADIR', 'SAKIT', 'IZIN', 'ALPHA'];
+const STATUSES: AttendanceStatus[] = ['HADIR', 'SAKIT', 'IZIN', 'ALPHA', 'TELAT'];
 const STATUS_BTN: Record<AttendanceStatus, string> = {
   HADIR: 'bg-green-600',
   SAKIT: 'bg-yellow-500',
   IZIN: 'bg-blue-600',
   ALPHA: 'bg-red-600',
+  TELAT: 'bg-orange-500',
 };
+
+// Batas telat dalam satu periode sebelum murid "disuruh pulang".
+const TELAT_LIMIT = 3;
 
 interface Row {
   status: AttendanceStatus;
@@ -72,6 +76,30 @@ export default function AttendancePage() {
 
   const [roster, setRoster] = useState<Student[]>([]);
 
+  // Akumulasi telat per murid dalam periode aktif (untuk peringatan pulang).
+  const classId = session?.schedule?.class.id;
+  const telatCounts = useQuery({
+    queryKey: ['telat-counts', classId, date],
+    enabled: !!classId,
+    queryFn: async () =>
+      (
+        await api.get<Record<string, number>>(
+          `/attendance/telat-counts?classId=${classId}&date=${date}`,
+        )
+      ).data,
+  });
+
+  // Proyeksi telat "hidup": angka tersimpan dari server, dikoreksi dengan
+  // pilihan status saat ini agar guru langsung tahu saat murid mencapai batas.
+  function effectiveTelat(studentId: string): number {
+    const base = telatCounts.data?.[studentId] ?? 0;
+    const savedThisSession =
+      session?.records?.find((r) => r.studentId === studentId)?.status ===
+      'TELAT';
+    const nowTelat = rows[studentId]?.status === 'TELAT';
+    return base - (savedThisSession ? 1 : 0) + (nowTelat ? 1 : 0);
+  }
+
   const save = useMutation({
     mutationFn: () =>
       api.put(`/attendance/sessions/${session!.id}`, {
@@ -86,6 +114,7 @@ export default function AttendancePage() {
         'success',
         'Presensi tersimpan. Notifikasi terkirim ke orang tua untuk Sakit/Izin/Alpha.',
       );
+      telatCounts.refetch();
     },
     onError: (e) => toast.push('error', apiError(e)),
   });
@@ -192,6 +221,11 @@ export default function AttendancePage() {
                     <td className="py-2">
                       <div className="font-medium">{s.fullName}</div>
                       <div className="text-xs text-gray-400">{s.nisn}</div>
+                      {effectiveTelat(s.id) >= TELAT_LIMIT && (
+                        <div className="mt-1 inline-block rounded bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+                          ⚠ Sudah {effectiveTelat(s.id)}× telat — disuruh pulang
+                        </div>
+                      )}
                     </td>
                     <td className="py-2">
                       <div className="flex gap-1">

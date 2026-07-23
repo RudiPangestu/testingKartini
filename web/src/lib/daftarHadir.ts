@@ -16,6 +16,7 @@ export interface MatrixRow {
   sakit: number;
   izin: number;
   alpha: number;
+  telat: number;
 }
 
 export const STATUS_CHAR: Record<AttendanceStatus, string> = {
@@ -23,6 +24,7 @@ export const STATUS_CHAR: Record<AttendanceStatus, string> = {
   SAKIT: 'S',
   IZIN: 'I',
   ALPHA: 'A',
+  TELAT: 'T',
 };
 
 /**
@@ -57,7 +59,8 @@ export function buildMatrix(
     let hadir = 0,
       sakit = 0,
       izin = 0,
-      alpha = 0;
+      alpha = 0,
+      telat = 0;
     for (const s of filtered) {
       const rec = s.records.find((r) => r.studentId === st.id);
       cells[s.id] = rec?.status;
@@ -65,8 +68,9 @@ export function buildMatrix(
       else if (rec?.status === 'SAKIT') sakit++;
       else if (rec?.status === 'IZIN') izin++;
       else if (rec?.status === 'ALPHA') alpha++;
+      else if (rec?.status === 'TELAT') telat++;
     }
-    return { studentId: st.id, nis: st.nis, nisn: st.nisn, fullName: st.fullName, cells, hadir, sakit, izin, alpha };
+    return { studentId: st.id, nis: st.nis, nisn: st.nisn, fullName: st.fullName, cells, hadir, sakit, izin, alpha, telat };
   });
 
   return { sessions: ms, rows };

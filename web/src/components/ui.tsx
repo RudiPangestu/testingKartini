@@ -108,6 +108,7 @@ const STATUS_BADGE: Record<string, string> = {
   SAKIT: 'bg-yellow-100 text-yellow-700',
   IZIN: 'bg-blue-100 text-blue-700',
   ALPHA: 'bg-red-100 text-red-700',
+  TELAT: 'bg-orange-100 text-orange-700',
 };
 
 export function StatusBadge({ status }: { status: string }) {

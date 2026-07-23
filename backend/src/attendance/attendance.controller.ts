@@ -44,6 +44,19 @@ export class AttendanceController {
     );
   }
 
+  // Akumulasi jumlah telat per murid pada satu kelas dalam periode aktif.
+  @Roles(Role.ADMIN, Role.GURU)
+  @Get('telat-counts')
+  telatCounts(
+    @Query('classId') classId: string,
+    @Query('date') date?: string,
+  ) {
+    return this.service.telatCounts(
+      classId,
+      date ?? new Date().toISOString().slice(0, 10),
+    );
+  }
+
   @Roles(Role.ADMIN, Role.GURU)
   @Get('sessions/:id')
   findSession(@Param('id') id: string) {

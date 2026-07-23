@@ -80,11 +80,12 @@ function ResultView({ data }: { data: ReportResult }) {
         />
         <Metric label="Alpha" value={`${data.alphaPct}%`} color="text-red-600" />
       </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
         <Metric label="Total" value={data.total} />
         <Metric label="Hadir" value={data.hadir} color="text-green-600" />
         <Metric label="Sakit" value={data.sakit} color="text-yellow-600" />
         <Metric label="Izin" value={data.izin} color="text-blue-600" />
+        <Metric label="Telat" value={data.telat} color="text-orange-600" />
         <Metric label="Alpha" value={data.alpha} color="text-red-600" />
       </div>
     </div>
@@ -98,6 +99,7 @@ function ProportionBar({ data }: { data: ReportResult }) {
     { v: data.hadir, c: 'bg-green-500', label: 'Hadir' },
     { v: data.sakit, c: 'bg-yellow-500', label: 'Sakit' },
     { v: data.izin, c: 'bg-blue-500', label: 'Izin' },
+    { v: data.telat, c: 'bg-orange-500', label: 'Telat' },
     { v: data.alpha, c: 'bg-red-500', label: 'Alpha' },
   ].filter((s) => s.v > 0);
   return (
@@ -203,6 +205,7 @@ function ExcelExport() {
           <option value="HADIR">Hadir</option>
           <option value="SAKIT">Sakit</option>
           <option value="IZIN">Izin</option>
+          <option value="TELAT">Telat</option>
           <option value="ALPHA">Alpha</option>
         </select>
       </div>

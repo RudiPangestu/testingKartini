@@ -15,7 +15,7 @@ export class AttendanceRecordDto {
   studentId: string;
 
   @IsEnum(AttendanceStatus, {
-    message: 'Status harus HADIR/SAKIT/IZIN/ALPHA',
+    message: 'Status harus HADIR/SAKIT/IZIN/ALPHA/TELAT',
   })
   status: AttendanceStatus;
 

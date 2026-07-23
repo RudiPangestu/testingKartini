@@ -15,6 +15,7 @@ const STATUS_LABEL: Record<AttendanceStatus, string> = {
   SAKIT: 'Sakit',
   IZIN: 'Izin',
   ALPHA: 'Alpha',
+  TELAT: 'Telat',
 };
 
 const INCLUDE = {
@@ -130,14 +131,17 @@ export class LessonLogsService {
 
   /**
    * Daftar siswa tidak hadir suatu kelas pada tanggal tertentu, diambil dari
-   * data presensi (status selain HADIR). Dipakai untuk prefill kolom
-   * "Siswa Tidak Hadir" pada form buku batas.
+   * data presensi (status Sakit/Izin/Alpha). Telat dianggap hadir (terlambat)
+   * sehingga tidak masuk daftar. Dipakai untuk prefill kolom "Siswa Tidak
+   * Hadir" pada form buku batas.
    */
   async suggestAbsent(classId: string, dateStr: string) {
     const { start, end } = dayRange(dateStr);
     const records = await this.prisma.attendance.findMany({
       where: {
-        status: { not: AttendanceStatus.HADIR },
+        status: {
+          notIn: [AttendanceStatus.HADIR, AttendanceStatus.TELAT],
+        },
         session: { classId, sessionDate: { gte: start, lt: end } },
       },
       select: {

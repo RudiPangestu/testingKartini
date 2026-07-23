@@ -242,6 +242,38 @@ export class AttendanceService {
     return this.findSession(sessionId);
   }
 
+  /**
+   * Akumulasi jumlah TELAT tiap murid dalam suatu kelas sepanjang periode
+   * (semester) aktif yang memuat tanggal acuan. Dipakai frontend untuk
+   * memunculkan peringatan "sudah 3× telat → disuruh pulang".
+   * Bila belum ada periode terdefinisi, dihitung dari seluruh riwayat.
+   */
+  async telatCounts(
+    classId: string,
+    dateStr: string,
+  ): Promise<Record<string, number>> {
+    const refDate = new Date(dateStr);
+    const term = await this.terms.findContaining(refDate, TermType.SEMESTER);
+
+    const sessionWhere: Prisma.AttendanceSessionWhereInput = { classId };
+    if (term) {
+      sessionWhere.sessionDate = {
+        gte: term.startDate,
+        lte: term.endDate,
+      };
+    }
+
+    const grouped = await this.prisma.attendance.groupBy({
+      by: ['studentId'],
+      where: { status: AttendanceStatus.TELAT, session: sessionWhere },
+      _count: { _all: true },
+    });
+
+    const result: Record<string, number> = {};
+    for (const g of grouped) result[g.studentId] = g._count._all;
+    return result;
+  }
+
   async findByStudent(studentId: string, requester: JwtUser) {
     await assertStudentAccess(this.prisma, requester, studentId);
     return this.prisma.attendance.findMany({

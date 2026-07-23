@@ -52,6 +52,16 @@ export interface Subject {
   code: string | null;
 }
 
+// Penugasan guru pengampu mapel pada satu kelas.
+export interface SubjectTeacher {
+  id: string;
+  subjectId: string;
+  classId: string;
+  teacherId: string;
+  class: { id: string; name: string };
+  teacher: { id: string; fullName: string };
+}
+
 export type DayOfWeek = 'SEN' | 'SEL' | 'RAB' | 'KAM' | 'JUM' | 'SAB' | 'MIN';
 
 export interface Schedule {
@@ -91,7 +101,7 @@ export interface Term {
   endDate: string;
 }
 
-export type AttendanceStatus = 'HADIR' | 'SAKIT' | 'IZIN' | 'ALPHA';
+export type AttendanceStatus = 'HADIR' | 'SAKIT' | 'IZIN' | 'ALPHA' | 'TELAT';
 
 export interface AttendanceRecord {
   id: string;
@@ -124,6 +134,7 @@ export interface ReportResult {
   sakit: number;
   izin: number;
   alpha: number;
+  telat: number;
   hadirEfektifPct: number;
   kehadiranSahPct: number;
   alphaPct: number;

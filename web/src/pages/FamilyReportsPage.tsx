@@ -35,6 +35,7 @@ function ProportionBar(props: {
   sakit: number;
   izin: number;
   alpha: number;
+  telat: number;
   total: number;
 }) {
   if (props.total === 0) return null;
@@ -42,6 +43,7 @@ function ProportionBar(props: {
     { v: props.hadir, c: 'bg-green-500' },
     { v: props.sakit, c: 'bg-yellow-400' },
     { v: props.izin, c: 'bg-blue-500' },
+    { v: props.telat, c: 'bg-orange-500' },
     { v: props.alpha, c: 'bg-red-500' },
   ].filter((s) => s.v > 0);
   return (
@@ -118,6 +120,7 @@ export default function FamilyReportsPage() {
             sakit={report.data.sakit}
             izin={report.data.izin}
             alpha={report.data.alpha}
+            telat={report.data.telat}
             total={report.data.total}
           />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -137,10 +140,11 @@ export default function FamilyReportsPage() {
               color="text-red-600"
             />
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-5">
             <Metric label="Hadir" value={report.data.hadir} color="text-green-600" />
             <Metric label="Sakit" value={report.data.sakit} color="text-yellow-600" />
             <Metric label="Izin" value={report.data.izin} color="text-blue-600" />
+            <Metric label="Telat" value={report.data.telat} color="text-orange-600" />
             <Metric label="Alpha" value={report.data.alpha} color="text-red-600" />
           </div>
           <div className="card mt-6 text-sm text-gray-600">

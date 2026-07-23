@@ -29,8 +29,9 @@ interface Breakdown {
   sakit: number;
   izin: number;
   alpha: number;
+  telat: number;
   hadirEfektifPct: number; // HADIR / total
-  kehadiranSahPct: number; // (HADIR+SAKIT+IZIN) / total  -> tidak alpha
+  kehadiranSahPct: number; // (HADIR+SAKIT+IZIN+TELAT) / total  -> tidak alpha
   alphaPct: number; // ALPHA / total
 }
 
@@ -154,7 +155,7 @@ export class ReportsService {
     const buckets = new Map<string, Record<AttendanceStatus, number>>();
     for (let i = 0; i < days; i++) {
       const d = this.addDays(start, i).toISOString().slice(0, 10);
-      buckets.set(d, { HADIR: 0, SAKIT: 0, IZIN: 0, ALPHA: 0 });
+      buckets.set(d, { HADIR: 0, SAKIT: 0, IZIN: 0, ALPHA: 0, TELAT: 0 });
     }
     for (const r of rows) {
       const key = r.session.sessionDate.toISOString().slice(0, 10);
@@ -171,7 +172,8 @@ export class ReportsService {
         sakit: c.SAKIT,
         izin: c.IZIN,
         alpha: c.ALPHA,
-        total: c.HADIR + c.SAKIT + c.IZIN + c.ALPHA,
+        telat: c.TELAT,
+        total: c.HADIR + c.SAKIT + c.IZIN + c.ALPHA + c.TELAT,
       })),
     };
   }
@@ -300,7 +302,7 @@ export class ReportsService {
       nama: 'RINGKASAN',
       kelas: `Total: ${rows.length}`,
       konteks: `Hadir: ${count('HADIR')}  Sakit: ${count('SAKIT')}`,
-      status: `Izin: ${count('IZIN')}`,
+      status: `Izin: ${count('IZIN')}  Telat: ${count('TELAT')}`,
       catatan: `Alpha: ${count('ALPHA')}`,
     });
     sum.font = { bold: true };
@@ -325,7 +327,8 @@ export class ReportsService {
     const sakit = count(AttendanceStatus.SAKIT);
     const izin = count(AttendanceStatus.IZIN);
     const alpha = count(AttendanceStatus.ALPHA);
-    const total = hadir + sakit + izin + alpha;
+    const telat = count(AttendanceStatus.TELAT);
+    const total = hadir + sakit + izin + alpha + telat;
 
     const pct = (n: number) =>
       total === 0 ? 0 : Math.round((n / total) * 10000) / 100;
@@ -336,8 +339,10 @@ export class ReportsService {
       sakit,
       izin,
       alpha,
+      telat,
       hadirEfektifPct: pct(hadir),
-      kehadiranSahPct: pct(hadir + sakit + izin),
+      // Telat tetap hadir (terlambat), jadi masuk kehadiran sah, bukan alpha.
+      kehadiranSahPct: pct(hadir + sakit + izin + telat),
       alphaPct: pct(alpha),
     };
   }

@@ -43,6 +43,7 @@ enum AttendanceStatus {
   SAKIT
   IZIN
   ALPHA
+  TELAT
 }
 
 enum TermType {
@@ -91,6 +92,7 @@ model User {
   // Relasi
   homeroomClasses     Class[]              @relation("Homeroom")
   teachingSchedules   Schedule[]           @relation("TeacherSchedule")
+  subjectAssignments  SubjectTeacher[]     @relation("SubjectTeacherUser")
   lessonLogs          LessonLog[]          @relation("LessonLogTeacher")
   gradeBooks          GradeBook[]          @relation("GradeBookTeacher")
   studentProfile      Student?             @relation("StudentAccount")
@@ -141,6 +143,7 @@ model Class {
   attendanceSessions AttendanceSession[]
   lessonLogs         LessonLog[]
   gradeBooks         GradeBook[]
+  subjectTeachers    SubjectTeacher[]
 
   @@index([academicYear])
   @@map("classes")
@@ -194,8 +197,29 @@ model Subject {
   schedules  Schedule[]
   lessonLogs LessonLog[]
   gradeBooks GradeBook[]
+  teachers   SubjectTeacher[]
 
   @@map("subjects")
+}
+
+// Penugasan guru pengampu mata pelajaran per kelas.
+// Satu mapel bisa punya banyak guru, dan mapel yang sama bisa diampu guru
+// berbeda di kelas yang berbeda. Terpisah dari Schedule (yang berbasis jam).
+model SubjectTeacher {
+  id        String   @id @default(uuid())
+  subjectId String   @map("subject_id")
+  classId   String   @map("class_id")
+  teacherId String   @map("teacher_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  class   Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
+  teacher User    @relation("SubjectTeacherUser", fields: [teacherId], references: [id])
+
+  @@unique([subjectId, classId, teacherId])
+  @@index([subjectId])
+  @@index([teacherId])
+  @@map("subject_teachers")
 }
 
 model Schedule {
