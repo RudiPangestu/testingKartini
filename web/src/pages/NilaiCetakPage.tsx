@@ -87,7 +87,7 @@ export default function NilaiCetakPage() {
                 <th rowSpan={2}>Nama Siswa</th>
                 {kds.map((k) => (
                   <th key={k.id} colSpan={3}>
-                    KD {k.nomor}
+                    TP {k.nomor}
                   </th>
                 ))}
                 <th rowSpan={2}>NR</th>
@@ -98,7 +98,7 @@ export default function NilaiCetakPage() {
                   <Fragment key={k.id}>
                     <th>Peng.</th>
                     <th>Prak.</th>
-                    <th>KD</th>
+                    <th>TP</th>
                   </Fragment>
                 ))}
               </tr>

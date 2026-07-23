@@ -152,7 +152,7 @@ export default function NilaiPage() {
   const addKd = useMutation({
     mutationFn: () => api.post(`/grades/book/${bookId}/kd`, {}),
     onSuccess: () => {
-      toast.push('success', 'KD ditambah');
+      toast.push('success', 'TP ditambah');
       qc.invalidateQueries({ queryKey: ['grade-book-full', bookId] });
     },
     onError: (e) => toast.push('error', apiError(e)),
@@ -161,7 +161,7 @@ export default function NilaiPage() {
   const removeKd = useMutation({
     mutationFn: (kdId: string) => api.delete(`/grades/kd/${kdId}`),
     onSuccess: () => {
-      toast.push('success', 'KD dihapus');
+      toast.push('success', 'TP dihapus');
       qc.invalidateQueries({ queryKey: ['grade-book-full', bookId] });
     },
     onError: (e) => toast.push('error', apiError(e)),
@@ -266,7 +266,7 @@ export default function NilaiPage() {
     <div>
       <PageHeader
         title="Daftar Nilai (Daflai)"
-        subtitle="Input nilai per Kompetensi Dasar (KD). NA, Predikat & NR dihitung otomatis."
+        subtitle="Input nilai per Tujuan Pembelajaran (TP). NA, Predikat & NR dihitung otomatis."
         action={
           bookId ? (
             <div className="flex gap-2">
@@ -360,7 +360,7 @@ export default function NilaiPage() {
             onClick={() => createBook.mutate()}
             disabled={createBook.isPending}
           >
-            {createBook.isPending ? 'Membuat…' : '+ Buat Buku Nilai (5 KD)'}
+            {createBook.isPending ? 'Membuat…' : '+ Buat Buku Nilai (5 TP)'}
           </button>
         </div>
       ) : fullQuery.isLoading || !full ? (
@@ -400,24 +400,24 @@ export default function NilaiPage() {
                     }
                     onClick={() => setActiveKd(k.id)}
                   >
-                    KD {k.nomor}
+                    TP {k.nomor}
                   </button>
                 ))}
                 <button
                   className="btn-ghost text-xs"
                   onClick={() => addKd.mutate()}
                 >
-                  + KD
+                  + TP
                 </button>
                 {kd && full.book.kds.length > 1 && (
                   <button
                     className="action-btn action-danger text-xs"
                     onClick={() => {
-                      if (confirm(`Hapus KD ${kd.nomor} beserta nilainya?`))
+                      if (confirm(`Hapus TP ${kd.nomor} beserta nilainya?`))
                         removeKd.mutate(kd.id);
                     }}
                   >
-                    Hapus KD {kd.nomor}
+                    Hapus TP {kd.nomor}
                   </button>
                 )}
               </div>
@@ -476,7 +476,7 @@ export default function NilaiPage() {
                           </th>
                         ))}
                         <th className="bg-amber-100">NA-K</th>
-                        <th>Nilai KD</th>
+                        <th>Nilai TP</th>
                         <th>Pred.</th>
                       </tr>
                     </thead>
@@ -533,7 +533,7 @@ export default function NilaiPage() {
                 </div>
               )}
               <p className="mt-3 text-xs text-gray-400">
-                Ingat menekan <b>Simpan Nilai</b> setelah mengisi. Perpindahan KD
+                Ingat menekan <b>Simpan Nilai</b> setelah mengisi. Perpindahan TP
                 tidak menghapus isian, tapi belum tersimpan sebelum ditekan simpan.
               </p>
             </>
@@ -563,7 +563,7 @@ function RekapView({ full }: { full: GradeBookFull }) {
             <th>Nama</th>
             {kds.map((k) => (
               <th key={k.id} className="text-center">
-                KD {k.nomor}
+                TP {k.nomor}
               </th>
             ))}
             <th className="text-center">NR</th>
