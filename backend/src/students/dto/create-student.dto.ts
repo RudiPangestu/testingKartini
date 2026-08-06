@@ -9,9 +9,10 @@ import {
 import { Gender } from '@prisma/client';
 
 export class CreateStudentDto {
+  // NISN opsional (permintaan sekolah: sebagian murid belum punya NISN).
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'NISN wajib diisi' })
-  nisn: string;
+  nisn?: string;
 
   @IsOptional()
   @IsString()

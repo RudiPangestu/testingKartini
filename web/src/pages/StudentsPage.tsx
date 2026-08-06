@@ -52,7 +52,7 @@ export default function StudentsPage() {
   const save = useMutation({
     mutationFn: (f: FormState) => {
       const body = {
-        nisn: f.nisn,
+        nisn: f.nisn.trim() || null,
         nis: f.nis || undefined,
         fullName: f.fullName,
         classId: f.classId || undefined,
@@ -170,7 +170,7 @@ export default function StudentsPage() {
             <tbody className="divide-y">
               {list.data.data.map((s) => (
                 <tr key={s.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-500">{s.nisn}</td>
+                  <td className="px-4 py-3 text-gray-500">{s.nisn ?? '—'}</td>
                   <td className="px-4 py-3 font-medium">{s.fullName}</td>
                   <td className="px-4 py-3">{s.class?.name ?? '—'}</td>
                   <td className="px-4 py-3">{s.gender ?? '—'}</td>
@@ -231,7 +231,7 @@ export default function StudentsPage() {
                           onClick={() => {
                             setForm({
                               id: s.id,
-                              nisn: s.nisn,
+                              nisn: s.nisn ?? '',
                               nis: s.nis ?? '',
                               fullName: s.fullName,
                               classId: s.classId ?? '',
@@ -265,7 +265,7 @@ export default function StudentsPage() {
         title={form.id ? 'Edit Murid' : 'Tambah Murid'}
         onClose={() => setOpen(false)}
       >
-        <Field label="NISN">
+        <Field label="NISN (opsional)">
           <input
             className="input"
             value={form.nisn}
@@ -377,7 +377,7 @@ export default function StudentsPage() {
         entity="students"
         title="Impor Murid"
         columns={['NISN', 'NIS', 'Nama', 'Kelas', 'JK']}
-        note="Kolom Kelas dirujuk berdasarkan nama — pastikan kelasnya sudah dibuat lebih dulu. JK diisi L atau P."
+        note="NISN opsional (boleh dikosongkan). Kolom Kelas dirujuk berdasarkan nama — pastikan kelasnya sudah dibuat lebih dulu. JK diisi L atau P."
         onDone={() => {
           qc.invalidateQueries({ queryKey: ['students'] });
           qc.invalidateQueries({ queryKey: ['classes'] });

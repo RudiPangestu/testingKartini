@@ -220,7 +220,10 @@ export class ImportService {
       const k = c.name.toLowerCase();
       if (!classMap.has(k)) classMap.set(k, c.id);
     }
-    const nisnSeen = new Set(students.map((s) => s.nisn));
+    // NISN opsional: hanya NISN yang terisi yang dipakai untuk cegah duplikat.
+    const nisnSeen = new Set(
+      students.map((s) => s.nisn).filter((n): n is string => !!n),
+    );
     const toCreate: Prisma.StudentCreateManyInput[] = [];
 
     for (const r of rows) {
@@ -231,15 +234,12 @@ export class ImportService {
       const className = pick(r, 'Kelas', 'Nama Kelas');
       const jk = pick(r, 'JK', 'Jenis Kelamin', 'Gender').toUpperCase();
 
-      if (!nisn) {
-        res.errors.push({ row, message: 'NISN kosong' });
-        continue;
-      }
       if (!fullName) {
         res.errors.push({ row, message: 'Nama kosong' });
         continue;
       }
-      if (nisnSeen.has(nisn)) {
+      // Lewati duplikat hanya bila NISN diisi (NISN kosong diizinkan).
+      if (nisn && nisnSeen.has(nisn)) {
         res.skipped++;
         continue;
       }
@@ -253,8 +253,8 @@ export class ImportService {
         classId = found;
       }
       const gender: Gender | null = jk === 'L' ? Gender.L : jk === 'P' ? Gender.P : null;
-      nisnSeen.add(nisn);
-      toCreate.push({ nisn, nis: nis || null, fullName, classId, gender });
+      if (nisn) nisnSeen.add(nisn);
+      toCreate.push({ nisn: nisn || null, nis: nis || null, fullName, classId, gender });
     }
     if (toCreate.length) {
       const c = await this.prisma.student.createMany({ data: toCreate, skipDuplicates: true });

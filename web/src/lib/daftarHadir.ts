@@ -8,7 +8,7 @@ export interface MatrixSession {
 export interface MatrixRow {
   studentId: string;
   nis: string | null;
-  nisn: string;
+  nisn: string | null;
   fullName: string;
   // status per sessionId
   cells: Record<string, AttendanceStatus | undefined>;
@@ -34,7 +34,7 @@ export const STATUS_CHAR: Record<AttendanceStatus, string> = {
  */
 export function buildMatrix(
   sessions: AttendanceSession[],
-  students: { id: string; nis: string | null; nisn: string; fullName: string }[],
+  students: { id: string; nis: string | null; nisn: string | null; fullName: string }[],
   opts: { from?: string; to?: string; subject?: string },
 ): { sessions: MatrixSession[]; rows: MatrixRow[] } {
   const filtered = sessions

@@ -93,13 +93,17 @@ export class StudentsService {
   }
 
   async create(dto: CreateStudentDto) {
-    await this.ensureNisnUnique(dto.nisn);
+    // NISN opsional: kosong disimpan sebagai null (unik hanya berlaku bila diisi).
+    const nisn = dto.nisn?.trim() || null;
+    if (nisn) {
+      await this.ensureNisnUnique(nisn);
+    }
     if (dto.classId) {
       await this.ensureClassExists(dto.classId);
     }
     return this.prisma.student.create({
       data: {
-        nisn: dto.nisn,
+        nisn,
         nis: dto.nis,
         fullName: dto.fullName,
         classId: dto.classId,
@@ -112,8 +116,11 @@ export class StudentsService {
 
   async update(id: string, dto: UpdateStudentDto) {
     await this.findOne(id);
-    if (dto.nisn) {
-      await this.ensureNisnUnique(dto.nisn, id);
+    // undefined = field tak diubah; '' = dikosongkan -> null.
+    const nisn =
+      dto.nisn === undefined ? undefined : dto.nisn.trim() || null;
+    if (nisn) {
+      await this.ensureNisnUnique(nisn, id);
     }
     if (dto.classId) {
       await this.ensureClassExists(dto.classId);
@@ -121,7 +128,7 @@ export class StudentsService {
     return this.prisma.student.update({
       where: { id },
       data: {
-        nisn: dto.nisn,
+        nisn,
         nis: dto.nis,
         fullName: dto.fullName,
         classId: dto.classId,

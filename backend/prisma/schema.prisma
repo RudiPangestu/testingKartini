@@ -153,7 +153,7 @@ model Class {
 
 model Student {
   id        String   @id @default(uuid())
-  nisn      String   @unique
+  nisn      String?  @unique
   nis       String?
   fullName  String   @map("full_name")
   classId   String?  @map("class_id")

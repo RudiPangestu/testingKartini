@@ -35,7 +35,7 @@ export interface StudentParentLink {
 
 export interface Student {
   id: string;
-  nisn: string;
+  nisn: string | null;
   nis: string | null;
   fullName: string;
   classId: string | null;
