@@ -277,6 +277,10 @@ export class EmailService {
       port: Number(SMTP_PORT) || 587,
       secure: Number(SMTP_PORT) === 465,
       auth: { user: SMTP_USER, pass: SMTP_PASS },
+      // Timeout agar SMTP yang lambat/diblok tidak menggantung pengiriman.
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 20_000,
     });
     return this.transporter;
   }

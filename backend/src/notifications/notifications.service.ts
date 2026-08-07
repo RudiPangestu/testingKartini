@@ -81,18 +81,27 @@ export class NotificationsService {
       },
     });
 
-    // Kirim hanya lewat kanal yang diaktifkan admin.
+    // Pengiriman kanal eksternal BEST-EFFORT dan NON-BLOCKING: inbox sudah
+    // tersimpan di atas, jadi respons API tidak menunggu (atau menggantung
+    // karena) provider push/email/WA yang lambat atau mati. Error ditangani
+    // di masing-masing channel; .catch() mencegah unhandled rejection.
     if (cfg.channelPush) {
-      await this.push.send(
-        user.pushTokens.map((t) => t.token),
-        { title: payload.title, body: payload.body, data: payload.data },
-      );
+      void this.push
+        .send(
+          user.pushTokens.map((t) => t.token),
+          { title: payload.title, body: payload.body, data: payload.data },
+        )
+        .catch(() => undefined);
     }
     if (cfg.channelEmail && user.email) {
-      await this.email.send(user.email, payload.title, payload.body);
+      void this.email
+        .send(user.email, payload.title, payload.body)
+        .catch(() => undefined);
     }
     if (cfg.channelWa) {
-      await this.wa.send(user.phone, `${payload.title}\n${payload.body}`);
+      void this.wa
+        .send(user.phone, `${payload.title}\n${payload.body}`)
+        .catch(() => undefined);
     }
   }
 
