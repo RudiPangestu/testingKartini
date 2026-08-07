@@ -19,6 +19,8 @@ describe('AttendanceService (pemicu notifikasi)', () => {
     sessionDate: new Date('2026-06-13'),
     schedule: {
       teacherId: 'guru-1',
+      subjectId: 'mtk',
+      classId: 'c1',
       subject: { name: 'Matematika' },
       class: { id: 'c1', name: 'XII' },
     },
@@ -30,7 +32,12 @@ describe('AttendanceService (pemicu notifikasi)', () => {
 
   const prisma = {
     attendanceSession: { findUnique: jest.fn().mockResolvedValue(session) },
-    attendance: { upsert: jest.fn().mockReturnValue({}) },
+    attendance: {
+      upsert: jest.fn().mockReturnValue({}),
+      groupBy: jest.fn().mockResolvedValue([]),
+    },
+    // Default: tidak ada penugasan SubjectTeacher (guru lain tetap ditolak).
+    subjectTeacher: { findUnique: jest.fn().mockResolvedValue(null) },
     $transaction: jest.fn().mockResolvedValue([]),
     student: {
       findUnique: jest.fn().mockResolvedValue({ fullName: 'Budi' }),
@@ -59,6 +66,8 @@ describe('AttendanceService (pemicu notifikasi)', () => {
     }).compile();
     service = moduleRef.get(AttendanceService);
     notifications.notifyParentsOfStudent.mockClear();
+    prisma.subjectTeacher.findUnique.mockResolvedValue(null);
+    prisma.attendance.groupBy.mockResolvedValue([]);
   });
 
   it('memicu notifikasi untuk ALPHA, tidak untuk HADIR', async () => {
@@ -116,5 +125,44 @@ describe('AttendanceService (pemicu notifikasi)', () => {
     );
     // Tidak melempar = lolos (HADIR tidak memicu notifikasi).
     expect(notifications.notifyParentsOfStudent).not.toHaveBeenCalled();
+  });
+
+  it('mengizinkan guru lain yang DITUGASKAN via SubjectTeacher', async () => {
+    // Ada penugasan mapel+kelas untuk guru-2 -> boleh presensi.
+    prisma.subjectTeacher.findUnique.mockResolvedValue({ id: 'st-1' });
+    const guruLain = { userId: 'guru-2', email: 'g2@kartini.sch.id', role: 'GURU' };
+    await service.saveAttendance(
+      'sess-1',
+      { records: [{ studentId: 's1', status: AttendanceStatus.HADIR }] },
+      guruLain,
+    );
+    expect(prisma.subjectTeacher.findUnique).toHaveBeenCalledWith({
+      where: {
+        subjectId_classId_teacherId: {
+          subjectId: 'mtk',
+          classId: 'c1',
+          teacherId: 'guru-2',
+        },
+      },
+    });
+  });
+
+  it('telatCounts mengembalikan jumlah TELAT per murid dalam periode', async () => {
+    terms.findContaining.mockResolvedValue({
+      startDate: new Date('2026-01-01'),
+      endDate: new Date('2026-06-30'),
+    });
+    prisma.attendance.groupBy.mockResolvedValue([
+      { studentId: 'a', _count: { _all: 3 } },
+      { studentId: 'b', _count: { _all: 1 } },
+    ]);
+    const res = await service.telatCounts('c1', '2026-03-01');
+    expect(res).toEqual({ a: 3, b: 1 });
+    // Hanya status TELAT yang dihitung.
+    expect(prisma.attendance.groupBy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ status: AttendanceStatus.TELAT }),
+      }),
+    );
   });
 });

@@ -16,14 +16,27 @@ const INCLUDE = {
 export class SchedulesService {
   constructor(private prisma: PrismaService) {}
 
-  findAll(query: QueryScheduleDto, user?: JwtUser) {
+  async findAll(query: QueryScheduleDto, user?: JwtUser) {
     const where: Prisma.ScheduleWhereInput = {
       ...(query.classId ? { classId: query.classId } : {}),
       ...(query.teacherId ? { teacherId: query.teacherId } : {}),
       ...(query.day ? { dayOfWeek: query.day } : {}),
-      // Guru hanya melihat jadwal yang ia ampu.
-      ...(user?.role === Role.GURU ? { teacherId: user.userId } : {}),
     };
+    // Guru melihat jadwal yang ia ampu langsung ATAU jadwal mapel+kelas
+    // tempat ia ditugaskan sebagai guru pengampu (SubjectTeacher).
+    if (user?.role === Role.GURU) {
+      const assigns = await this.prisma.subjectTeacher.findMany({
+        where: { teacherId: user.userId },
+        select: { subjectId: true, classId: true },
+      });
+      where.OR = [
+        { teacherId: user.userId },
+        ...assigns.map((a) => ({
+          subjectId: a.subjectId,
+          classId: a.classId,
+        })),
+      ];
+    }
     return this.prisma.schedule.findMany({
       where,
       include: INCLUDE,

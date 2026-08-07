@@ -34,12 +34,13 @@ describe('ReportsService (perhitungan persentase)', () => {
     groupBy.mockReset();
   });
 
-  function mockCounts(h: number, s: number, i: number, a: number) {
+  function mockCounts(h: number, s: number, i: number, a: number, t = 0) {
     groupBy.mockResolvedValue([
       { status: AttendanceStatus.HADIR, _count: { _all: h } },
       { status: AttendanceStatus.SAKIT, _count: { _all: s } },
       { status: AttendanceStatus.IZIN, _count: { _all: i } },
       { status: AttendanceStatus.ALPHA, _count: { _all: a } },
+      { status: AttendanceStatus.TELAT, _count: { _all: t } },
     ]);
   }
 
@@ -71,6 +72,18 @@ describe('ReportsService (perhitungan persentase)', () => {
     expect(r.hadirEfektifPct).toBe(0);
     expect(r.kehadiranSahPct).toBe(0);
     expect(r.alphaPct).toBe(0);
+  });
+
+  it('Telat dihitung sebagai kehadiran sah, bukan alpha', async () => {
+    // 1 Hadir, 1 Telat, 2 Alpha -> total 4. Sah = Hadir+Telat = 2 (50%).
+    mockCounts(1, 0, 0, 2, 1);
+    const r = await service.general('month', '2026-06-13');
+
+    expect(r.total).toBe(4);
+    expect(r.telat).toBe(1);
+    expect(r.kehadiranSahPct).toBe(50); // (1 Hadir + 1 Telat) / 4
+    expect(r.alphaPct).toBe(50); // 2/4 — Telat TIDAK menambah alpha
+    expect(r.hadirEfektifPct).toBe(25); // hanya HADIR murni
   });
 
   it('membulatkan persentase 2 desimal (1 dari 3 = 33.33%)', async () => {

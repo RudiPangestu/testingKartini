@@ -56,8 +56,12 @@ export class AttendanceService {
         where: { id: dto.scheduleId },
       });
       if (!schedule) throw new BadRequestException('Jadwal tidak ditemukan');
-      // Guru hanya boleh membuka sesi untuk jadwal yang ia ajar.
-      if (user.role === 'GURU' && schedule.teacherId !== userId) {
+      // Guru boleh membuka sesi bila ia pemilik jadwal atau ditugaskan
+      // sebagai guru pengampu mapel di kelas ini.
+      if (
+        user.role === 'GURU' &&
+        !(await this.teacherCanHandleSchedule(schedule, userId))
+      ) {
         throw new ForbiddenException(
           'Guru hanya dapat presensi pada jadwal yang diampu',
         );
@@ -136,10 +140,28 @@ export class AttendanceService {
     const day = AttendanceService.DOW[date.getUTCDay()];
     if (!day) return []; // Minggu: tidak ada jadwal
 
+    // Guru: jadwal yang ia ampu langsung ATAU mapel+kelas tempat ia ditugaskan.
+    let teacherScope: Prisma.ScheduleWhereInput = {};
+    if (user.role === Role.GURU) {
+      const assigns = await this.prisma.subjectTeacher.findMany({
+        where: { teacherId: user.userId },
+        select: { subjectId: true, classId: true },
+      });
+      teacherScope = {
+        OR: [
+          { teacherId: user.userId },
+          ...assigns.map((a) => ({
+            subjectId: a.subjectId,
+            classId: a.classId,
+          })),
+        ],
+      };
+    }
+
     const schedules = await this.prisma.schedule.findMany({
       where: {
         dayOfWeek: day,
-        ...(user.role === Role.GURU ? { teacherId: user.userId } : {}),
+        ...teacherScope,
       },
       include: {
         subject: { select: { name: true } },
@@ -191,7 +213,8 @@ export class AttendanceService {
     if (
       user.role === Role.GURU &&
       session.sourceType === AttendanceSource.SCHEDULE &&
-      session.schedule?.teacherId !== userId
+      session.schedule &&
+      !(await this.teacherCanHandleSchedule(session.schedule, userId))
     ) {
       throw new ForbiddenException(
         'Guru hanya dapat presensi pada jadwal yang diampu',
@@ -272,6 +295,27 @@ export class AttendanceService {
     const result: Record<string, number> = {};
     for (const g of grouped) result[g.studentId] = g._count._all;
     return result;
+  }
+
+  /**
+   * Apakah guru berhak presensi pada suatu jadwal: ia pemilik jadwal, ATAU
+   * ditugaskan sebagai guru pengampu mapel di kelas itu (SubjectTeacher).
+   */
+  private async teacherCanHandleSchedule(
+    schedule: { teacherId: string; subjectId: string; classId: string },
+    userId: string,
+  ): Promise<boolean> {
+    if (schedule.teacherId === userId) return true;
+    const assignment = await this.prisma.subjectTeacher.findUnique({
+      where: {
+        subjectId_classId_teacherId: {
+          subjectId: schedule.subjectId,
+          classId: schedule.classId,
+          teacherId: userId,
+        },
+      },
+    });
+    return !!assignment;
   }
 
   async findByStudent(studentId: string, requester: JwtUser) {
