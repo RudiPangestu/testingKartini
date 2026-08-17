@@ -7,7 +7,7 @@ import { useAuth } from '../lib/auth';
 import ImportModal from '../components/ImportModal';
 import type { Paginated, Role, User } from '../lib/types';
 
-const ROLES: Role[] = ['ADMIN', 'GURU', 'ORTU', 'MURID'];
+const ROLES: Role[] = ['ADMIN', 'GURU', 'PIKET', 'ORTU', 'MURID'];
 
 interface FormState {
   id?: string;

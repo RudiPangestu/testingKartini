@@ -17,6 +17,7 @@ enum Role {
   GURU
   ORTU
   MURID
+  PIKET
 }
 
 enum Gender {
@@ -98,6 +99,7 @@ model User {
   studentProfile      Student?             @relation("StudentAccount")
   parentLinks         StudentParent[]      @relation("ParentUser")
   recordedAttendances Attendance[]         @relation("RecordedBy")
+  dailyRecords        DailyAttendance[]    @relation("DailyRecordedBy")
   createdSessions     AttendanceSession[]  @relation("SessionCreatedBy")
   createdEvents       Event[]              @relation("EventCreatedBy")
   pushTokens          PushToken[]
@@ -164,11 +166,12 @@ model Student {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  class       Class?          @relation(fields: [classId], references: [id])
-  account     User?           @relation("StudentAccount", fields: [userId], references: [id])
-  parents     StudentParent[]
-  attendances Attendance[]
-  gradeScores GradeScore[]
+  class            Class?            @relation(fields: [classId], references: [id])
+  account          User?             @relation("StudentAccount", fields: [userId], references: [id])
+  parents          StudentParent[]
+  attendances      Attendance[]
+  dailyAttendances DailyAttendance[]
+  gradeScores      GradeScore[]
 
   @@index([classId])
   @@map("students")
@@ -373,6 +376,25 @@ model Attendance {
   @@unique([sessionId, studentId])
   @@index([studentId])
   @@map("attendance")
+}
+
+// Daftar hadir HARIAN (per murid per hari), diisi guru piket — terpisah dari
+// presensi tatap muka (per jadwal). Satu record per (murid, tanggal).
+model DailyAttendance {
+  id           String           @id @default(uuid())
+  studentId    String           @map("student_id")
+  date         DateTime         @db.Date
+  status       AttendanceStatus
+  note         String?
+  recordedById String           @map("recorded_by")
+  recordedAt   DateTime         @default(now()) @map("recorded_at")
+
+  student    Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  recordedBy User    @relation("DailyRecordedBy", fields: [recordedById], references: [id])
+
+  @@unique([studentId, date])
+  @@index([date])
+  @@map("daily_attendance")
 }
 
 // ===================== NOTIFIKASI =====================

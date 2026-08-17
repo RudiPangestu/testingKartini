@@ -16,6 +16,7 @@ import { TermsModule } from './terms/terms.module';
 import { SettingsModule } from './settings/settings.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AttendanceModule } from './attendance/attendance.module';
+import { DailyAttendanceModule } from './daily-attendance/daily-attendance.module';
 import { ReportsModule } from './reports/reports.module';
 import { LessonLogsModule } from './lesson-logs/lesson-logs.module';
 import { GradesModule } from './grades/grades.module';
@@ -40,6 +41,7 @@ import { SchedulerModule } from './scheduler/scheduler.module';
     SettingsModule,
     NotificationsModule,
     AttendanceModule,
+    DailyAttendanceModule,
     ReportsModule,
     LessonLogsModule,
     GradesModule,

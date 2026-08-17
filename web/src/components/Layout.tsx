@@ -38,6 +38,7 @@ const NAV: NavItem[] = [
   // --- Admin & guru ---
   { to: '/', label: 'Dashboard', roles: ['ADMIN', 'GURU'], icon: <I d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10" /> },
   { to: '/attendance', label: 'Presensi', roles: ['ADMIN', 'GURU'], icon: <I d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" /> },
+  { to: '/harian', label: 'Absensi Harian', roles: ['ADMIN', 'PIKET'], icon: <I d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2zM9 16l2 2 4-4" /> },
   { to: '/reports', label: 'Laporan', roles: ['ADMIN', 'GURU'], icon: <I d="M3 3v18h18M7 14l3-3 3 3 5-6" /> },
   { to: '/students', label: 'Murid', roles: ['ADMIN', 'GURU'], icon: <I d="M17 20v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 10a4 4 0 100-8 4 4 0 000 8M23 20v-2a4 4 0 00-3-3.87M16 2.13a4 4 0 010 7.75" /> },
   { to: '/classes', label: 'Kelas', roles: ['ADMIN', 'GURU'], icon: <I d="M3 7l9-4 9 4-9 4-9-4zM3 7v6M21 7v6M7 9v5a5 3 0 0010 0V9" /> },

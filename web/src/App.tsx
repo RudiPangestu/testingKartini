@@ -14,6 +14,7 @@ import SchedulesPage from './pages/SchedulesPage';
 import EventsPage from './pages/EventsPage';
 import TermsPage from './pages/TermsPage';
 import AttendancePage from './pages/AttendancePage';
+import DailyAttendancePage from './pages/DailyAttendancePage';
 import ReportsPage from './pages/ReportsPage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
 import SettingsPage from './pages/SettingsPage';
@@ -35,6 +36,8 @@ import type { ReactElement } from 'react';
 function HomePage() {
   const role = useAuth((s) => s.user?.role);
   if (role === 'ORTU' || role === 'MURID') return <FamilyHomePage />;
+  // Guru piket langsung ke daftar hadir harian (tugas utamanya).
+  if (role === 'PIKET') return <Navigate to="/harian" replace />;
   return <DashboardPage />;
 }
 
@@ -105,6 +108,14 @@ export default function App() {
           element={
             <Protected roles={['ADMIN', 'GURU']}>
               <AttendancePage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/harian"
+          element={
+            <Protected roles={['ADMIN', 'PIKET']}>
+              <DailyAttendancePage />
             </Protected>
           }
         />

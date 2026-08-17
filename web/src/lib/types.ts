@@ -1,4 +1,15 @@
-export type Role = 'ADMIN' | 'GURU' | 'ORTU' | 'MURID';
+export type Role = 'ADMIN' | 'GURU' | 'ORTU' | 'MURID' | 'PIKET';
+
+// Baris daftar hadir harian (per murid) untuk halaman guru piket.
+export interface DailyRosterItem {
+  studentId: string;
+  fullName: string;
+  nisn: string | null;
+  nis: string | null;
+  className: string | null;
+  status: AttendanceStatus | null;
+  note: string | null;
+}
 
 export interface User {
   id: string;
