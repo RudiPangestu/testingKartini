@@ -2,11 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { retry } from '../../common/retry';
 
 /**
- * Pengiriman WhatsApp via gateway HTTP generik (mis. Fonnte/Wablas - gratis/murah).
+ * Pengiriman WhatsApp via gateway HTTP (default: Fonnte).
  * Aktif hanya bila WA_GATEWAY_URL dikonfigurasi; jika tidak, no-op aman.
  *
- * Format request mengikuti gateway umum: POST { target, message } dengan
- * header Authorization berisi token. Sesuaikan bila gateway berbeda.
+ * Fonnte (https://api.fonnte.com/send) menerima body form-urlencoded dengan
+ * field `target` & `message`, dan header `Authorization: <TOKEN>` (tanpa
+ * "Bearer"). Format ini juga umum kompatibel dengan Wablas.
+ * Nomor tujuan memakai kode negara tanpa '+' (mis. 628123456789).
  */
 @Injectable()
 export class WaService {
@@ -20,13 +22,14 @@ export class WaService {
     }
     try {
       await retry(async () => {
+        const body = new URLSearchParams({ target: phone, message });
         const res = await fetch(url, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded',
             Authorization: token,
           },
-          body: JSON.stringify({ target: phone, message }),
+          body: body.toString(),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
       });
