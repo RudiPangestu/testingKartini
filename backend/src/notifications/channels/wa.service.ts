@@ -32,9 +32,26 @@ export class WaService {
           body: body.toString(),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        // Fonnte membalas HTTP 200 walau gagal — periksa field status di body
+        // agar kegagalan (mis. device disconnect, target salah) tidak tersembunyi.
+        const raw = await res.text();
+        let json: { status?: boolean; reason?: string; detail?: string } | null;
+        try {
+          json = JSON.parse(raw);
+        } catch {
+          json = null;
+        }
+        if (json && json.status === false) {
+          throw new Error(
+            `gateway menolak: ${json.reason || json.detail || raw.slice(0, 120)}`,
+          );
+        }
       });
+      this.logger.log(`WA terkirim ke ${phone}`);
     } catch (err) {
-      this.logger.warn(`WA gagal setelah retry: ${(err as Error).message}`);
+      this.logger.warn(
+        `WA gagal ke ${phone} setelah retry: ${(err as Error).message}`,
+      );
     }
   }
 }
