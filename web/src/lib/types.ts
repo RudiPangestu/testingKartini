@@ -1,5 +1,36 @@
 export type Role = 'ADMIN' | 'GURU' | 'ORTU' | 'MURID' | 'PIKET';
 
+// ---------- Pelanggaran (tata tertib) ----------
+export type ViolationLevel = 'RINGAN' | 'SEDANG' | 'BERAT';
+
+export interface ViolationType {
+  id: string;
+  category: string;
+  level: ViolationLevel;
+  name: string;
+  points: number;
+  active: boolean;
+}
+
+export interface StudentViolationRecord {
+  id: string;
+  studentId: string;
+  typeId: string | null;
+  description: string;
+  points: number;
+  date: string;
+  note: string | null;
+  type: { level: ViolationLevel; category: string } | null;
+  recordedBy: { fullName: string };
+}
+
+export interface ViolationSummary {
+  studentId: string;
+  totalPoints: number;
+  count: number;
+  records: StudentViolationRecord[];
+}
+
 // Baris daftar hadir harian (per murid) untuk halaman guru piket.
 export interface DailyRosterItem {
   studentId: string;

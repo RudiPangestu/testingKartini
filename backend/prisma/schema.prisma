@@ -100,6 +100,7 @@ model User {
   parentLinks         StudentParent[]      @relation("ParentUser")
   recordedAttendances Attendance[]         @relation("RecordedBy")
   dailyRecords        DailyAttendance[]    @relation("DailyRecordedBy")
+  recordedViolations  StudentViolation[]   @relation("ViolationRecordedBy")
   createdSessions     AttendanceSession[]  @relation("SessionCreatedBy")
   createdEvents       Event[]              @relation("EventCreatedBy")
   pushTokens          PushToken[]
@@ -172,6 +173,7 @@ model Student {
   attendances      Attendance[]
   dailyAttendances DailyAttendance[]
   gradeScores      GradeScore[]
+  violations       StudentViolation[]
 
   @@index([classId])
   @@map("students")
@@ -395,6 +397,51 @@ model DailyAttendance {
   @@unique([studentId, date])
   @@index([date])
   @@map("daily_attendance")
+}
+
+// ===================== PELANGGARAN (TATA TERTIB) =====================
+
+enum ViolationLevel {
+  RINGAN
+  SEDANG
+  BERAT
+}
+
+// Katalog jenis pelanggaran + poin (dapat dikelola admin).
+model ViolationType {
+  id        String         @id @default(uuid())
+  category  String // mis. Ketertiban, Kehadiran, Berpakaian, Moral, ...
+  level     ViolationLevel
+  name      String
+  points    Int
+  active    Boolean        @default(true)
+  createdAt DateTime       @default(now()) @map("created_at")
+
+  violations StudentViolation[]
+
+  @@index([level])
+  @@map("violation_types")
+}
+
+// Catatan pelanggaran seorang murid. Deskripsi & poin di-snapshot agar riwayat
+// tetap akurat meski katalog diubah kemudian. typeId null bila entri manual.
+model StudentViolation {
+  id           String   @id @default(uuid())
+  studentId    String   @map("student_id")
+  typeId       String?  @map("type_id")
+  description  String
+  points       Int
+  date         DateTime @db.Date
+  note         String?
+  recordedById String   @map("recorded_by")
+  recordedAt   DateTime @default(now()) @map("recorded_at")
+
+  student    Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  type       ViolationType? @relation(fields: [typeId], references: [id])
+  recordedBy User           @relation("ViolationRecordedBy", fields: [recordedById], references: [id])
+
+  @@index([studentId])
+  @@map("student_violations")
 }
 
 // ===================== NOTIFIKASI =====================

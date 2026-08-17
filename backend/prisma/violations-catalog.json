@@ -1,0 +1,380 @@
+[
+ {
+  "level": "RINGAN",
+  "category": "Ketertiban",
+  "name": "Membuat keributan / kegaduhan di lingkungan sekolah baik di dalam kelas maupun di luar kelas saat KBM berlansung",
+  "points": 10
+ },
+ {
+  "level": "RINGAN",
+  "category": "Ketertiban",
+  "name": "Masuk lingkungan sekolah dengan loncat pagar atau menerobos pintu gerbang melebihi jam 7.00 WIB",
+  "points": 25
+ },
+ {
+  "level": "RINGAN",
+  "category": "Ketertiban",
+  "name": "Keluar dari lingkungan sekolah tanpa izin guru piket",
+  "points": 25
+ },
+ {
+  "level": "RINGAN",
+  "category": "Ketertiban",
+  "name": "Mengotori (mencorat-coret, mengotori dan menulis) benda milik sekolah, guru, karyawan atau teman, maka harus membersihkan seperti semula",
+  "points": 20
+ },
+ {
+  "level": "RINGAN",
+  "category": "Ketertiban",
+  "name": "Makan di dalam kelas saat berlangsungnya kegiatan belajar",
+  "points": 5
+ },
+ {
+  "level": "RINGAN",
+  "category": "Ketertiban",
+  "name": "Membuang sampah sembarangan atau tidak pada tempatnya",
+  "points": 5
+ },
+ {
+  "level": "RINGAN",
+  "category": "Ketertiban",
+  "name": "Membawa benda yang tidak ada kaitannya dengan proses belajar mengajar",
+  "points": 10
+ },
+ {
+  "level": "RINGAN",
+  "category": "Ketertiban",
+  "name": "Tidak mengikuti upacara bendera tanpa alasan yang jelas",
+  "points": 15
+ },
+ {
+  "level": "RINGAN",
+  "category": "Ketertiban",
+  "name": "Ikut atau membentuk kelompok /komunitas yang melanggar aturan sekolah ( geng sekolah )",
+  "points": 30
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Kehadiran",
+  "name": "Terlambat hadir / terlambat masuk kelas tanpa alasan yang benar/ jelas",
+  "points": 20
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Kehadiran",
+  "name": "Izin keluar kelas saat proses belajar berlangsung dan tidak Kembali",
+  "points": 30
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Kehadiran",
+  "name": "Siswa berada Diluar kelas pada saat KBM berlangsung tanpa izin guru yang bersangkutan",
+  "points": 30
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Kehadiran",
+  "name": "Alpa (tanpa keterangan)",
+  "points": 45
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Kehadiran",
+  "name": "Tidak mengikuti kegiatan belajar (membolos) padahal ada di sekolah",
+  "points": 50
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Berpakaian",
+  "name": "Siswa memakai seragam yang tidak sesuai dengan ketentuan ; celana pensil,rok span ,kemeja junkis. Diberi peringatan, jika tidak diindahkan maka pakaian tersebut digunting",
+  "points": 25
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Berpakaian",
+  "name": "Tidak memakai perlengkapan upacara bendera (topi dan dasi)dan ditempatkan pada barisan tersendiri .",
+  "points": 10
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Berpakaian",
+  "name": "Memakai seragam lengkap tidak sesuai jadwal pakaian harian",
+  "points": 10
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Berpakaian",
+  "name": "Tidak memakai ikat pinggang yang sesuai dengan ketentuan",
+  "points": 10
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Berpakaian",
+  "name": "Memakai sepatu tidak sesuai ketentuan,maka sepatu tersebut akan disita sementara dan diambil setelah pulang sekolah",
+  "points": 10
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Berpakaian",
+  "name": "Tidak memakai kaos kaki",
+  "points": 10
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Berpakaian",
+  "name": "Siswa putri tidak memakai kaos dalam atau memakai kaos dalam berwarma mencolok .",
+  "points": 15
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Berpakaian",
+  "name": "Memakai topi yang bukan topi sekolah di lingkungan sekolah",
+  "points": 15
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Berpakaian",
+  "name": "Siswa memakai perhiasan atau aksesoris ;kalung, gelang, anting-anting disita dan dikembalikan setelah KBM",
+  "points": 15
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Berpakaian",
+  "name": "Tidak memakai papan nama / bendera pada baju yang dipakai",
+  "points": 15
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Berpakaian",
+  "name": "Mengenakan jaket/sweater , kaos oblong tanpa alasan yang jelas di kelas",
+  "points": 15
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Berpakaian",
+  "name": "Siswa putri memakai kerudung yang tidak sesuai dengan ketentuan",
+  "points": 15
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Berpakaian",
+  "name": "Siswa bertato, baik sementara maupun permanen dan wajib menghapusnya",
+  "points": 25
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Berpakaian",
+  "name": "Siswa memakai sandal selama KBM berlangsung kecuali ada izin dari pihak sekolah ,disita sementara dan dikembalikan setelah KBM",
+  "points": 10
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Penampilan Rambut Dan Wajah",
+  "name": "Siswa putra rambut panjang melampaui batas ketentuan (telinga, alis dan kerah baju) , guru berhak untuk mempringatinya",
+  "points": 15
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Penampilan Rambut Dan Wajah",
+  "name": "Rambut dipotong / dicukur / dengan model tidak lazim,",
+  "points": 10
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Penampilan Rambut Dan Wajah",
+  "name": "Rambut diicat warna – warni",
+  "points": 10
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Penampilan Rambut Dan Wajah",
+  "name": "Siswa putri terbukti melakukan tanam bulu mata,kerok alis,sulam bibir, menggunakan maskara,sulam alis, kuitek,lipstick dll",
+  "points": 25
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Penampilan Rambut Dan Wajah",
+  "name": "Siswa putri bermake up selama KBM berlangsung",
+  "points": 10
+ },
+ {
+  "level": "RINGAN",
+  "category": "Pelanggaran Penampilan Rambut Dan Wajah",
+  "name": "Siswa memelihara kuku panjang ,",
+  "points": 10
+ },
+ {
+  "level": "SEDANG",
+  "category": "Menggunakan Rokok / Vave",
+  "name": "Membawa rokok ke dalam lingkungan sekolah",
+  "points": 30
+ },
+ {
+  "level": "SEDANG",
+  "category": "Menggunakan Rokok / Vave",
+  "name": "Merokok / menghisap rokok di kelas atau di lingkungan sekolah",
+  "points": 100
+ },
+ {
+  "level": "SEDANG",
+  "category": "Menggunakan Rokok / Vave",
+  "name": "Merokok / menghisap rokok di sekitar sekolah (ring 2) yaitu maksimal radius 200 meter dari pagar sekolah.",
+  "points": 50
+ },
+ {
+  "level": "SEDANG",
+  "category": "Menggunakan Rokok / Vave",
+  "name": "Merokok di luar sekolah (ring 3) Yaitu radius lebih dari 200 meter dari pagar sekolah ,masih dalam kegiatan belajar mengajar dan menggunakan seragam sekolah.",
+  "points": 50
+ },
+ {
+  "level": "SEDANG",
+  "category": "Alat Komunikasi Dan Elektronik",
+  "name": "Mengaktifkan / mengadakan komunikasi dengan handphone / Tablet pada saat mengikuti pelajaran akan disita selama 2 bulan",
+  "points": 50
+ },
+ {
+  "level": "SEDANG",
+  "category": "Alat Komunikasi Dan Elektronik",
+  "name": "Membawa/mengaktifkan/mengadakan komunikasi dengan Hand phone saat Ujian akan disita sementara sampai ujian berakhir",
+  "points": 50
+ },
+ {
+  "level": "SEDANG",
+  "category": "Alat Komunikasi Dan Elektronik",
+  "name": "Mencontek dengan menggunakan handphone dalam ulangan/ujian dan akan di sita sementara sampai ujian berakhir",
+  "points": 50
+ },
+ {
+  "level": "BERAT",
+  "category": "Moral",
+  "name": "Menyimpan, meyebarluaskan, memperjualbelikan : Foto Porno, Buku Porno, Vidio Porno, Media cetak Porno, Vidio Kekerasan melalui media sosial.",
+  "points": 100
+ },
+ {
+  "level": "BERAT",
+  "category": "Moral",
+  "name": "Pelanggaran susila/ berpacaran melebihi batas di sekolah",
+  "points": 50
+ },
+ {
+  "level": "BERAT",
+  "category": "Moral",
+  "name": "Mencemarkan nama baik seseorang secara lisan maupun tertulis atau melalui mediasosial",
+  "points": 25
+ },
+ {
+  "level": "BERAT",
+  "category": "Moral",
+  "name": "Merekayasa gambar / foto yang mencemarkan nama baik seseorang",
+  "points": 25
+ },
+ {
+  "level": "BERAT",
+  "category": "Moral",
+  "name": "Siswa putra terbukti nikah / menghamili di luar nikah",
+  "points": 100
+ },
+ {
+  "level": "BERAT",
+  "category": "Moral",
+  "name": "Siswa putri terbukti nikah, hamil / melahirkan di luar nikah",
+  "points": 100
+ },
+ {
+  "level": "BERAT",
+  "category": "Penggunaan Senjata Tajam",
+  "name": "Membawa senjata tajam ( pisau, celurit, dll.)",
+  "points": 50
+ },
+ {
+  "level": "BERAT",
+  "category": "Penggunaan Senjata Tajam",
+  "name": "Memperjualbelikan senjata tajam di sekolah",
+  "points": 50
+ },
+ {
+  "level": "BERAT",
+  "category": "Penggunaan Senjata Tajam",
+  "name": "Menggunakan senjata tajam untuk mengancam",
+  "points": 75
+ },
+ {
+  "level": "BERAT",
+  "category": "Penggunaan Senjata Tajam",
+  "name": "Menggunakan senjata tajam untuk melukai",
+  "points": 100
+ },
+ {
+  "level": "BERAT",
+  "category": "Penggunaan Obat / Minuman Terlarang",
+  "name": "Membawa narkoba / minuman keras ke lingkungan sekolah",
+  "points": 200
+ },
+ {
+  "level": "BERAT",
+  "category": "Penggunaan Obat / Minuman Terlarang",
+  "name": "Memperjual-belikan narkoba / minuman keras di lingkungan dalam atau di luar sekolah.",
+  "points": 200
+ },
+ {
+  "level": "BERAT",
+  "category": "Penggunaan Obat / Minuman Terlarang",
+  "name": "Menggunakan narkoba / minuman keras di dalam/ di luar lingkungan sekolah.",
+  "points": 200
+ },
+ {
+  "level": "BERAT",
+  "category": "Perkelahian",
+  "name": "Melakukan bulying dan kekerasan/berkelahi/tawuran baik pada waktu jam belajar maupun di luar waktu jam belajar.",
+  "points": 100
+ },
+ {
+  "level": "BERAT",
+  "category": "Perkelahian",
+  "name": "Bertengkar secara lisan dengan teman di lingkungan sekolah / di luar sekolah / melalui media sosial.",
+  "points": 35
+ },
+ {
+  "level": "BERAT",
+  "category": "Pelanggaran Terhadap Kepala Sekolah,Guru, Dan Karyawan",
+  "name": "Pencemaran nama baik terhadap Kepala Sekolah, guru, karyawan baik secara lisan maupun tertulis.",
+  "points": 45
+ },
+ {
+  "level": "BERAT",
+  "category": "Pelanggaran Terhadap Kepala Sekolah,Guru, Dan Karyawan",
+  "name": "Pencemaran nama baik terhadap Kepala Sekolah, guru, karyawan baik secara lisan maupun tertulisdisertai ancaman / intimidasi / perbuatan tidak menyenangkan baik langsung maupun tidak langsung.",
+  "points": 75
+ },
+ {
+  "level": "BERAT",
+  "category": "Pelanggaran Terhadap Kepala Sekolah,Guru, Dan Karyawan",
+  "name": "Melakukan pemukulan atau tindak kekerasan lainnya terhadap Kepala Sekolah, guru,atau karyawan",
+  "points": 200
+ },
+ {
+  "level": "BERAT",
+  "category": "Pelanggaran Terhadap Kepala Sekolah,Guru, Dan Karyawan",
+  "name": "Melakukan pencemaran nama baik sekolah, baik langsung maupun tidak langsung",
+  "points": 50
+ },
+ {
+  "level": "BERAT",
+  "category": "Pelanggaran Terhadap Kepala Sekolah,Guru, Dan Karyawan",
+  "name": "Melawan secara lisan ( mengumpat / mencela , berkata keras )",
+  "points": 50
+ },
+ {
+  "level": "BERAT",
+  "category": "Pelanggaran Terhadap Kepala Sekolah,Guru, Dan Karyawan",
+  "name": "Melawan secara kontrovensional (menendang / membanting pintu/meja/kursi/kelengkapan sekolah lainnya)",
+  "points": 50
+ },
+ {
+  "level": "BERAT",
+  "category": "Pelanggaran Terhadap Kepala Sekolah,Guru, Dan Karyawan",
+  "name": "Memperolok guru/ kepala sekolah/karyawan secara langsung ataupun melalui media sosial",
+  "points": 100
+ }
+]

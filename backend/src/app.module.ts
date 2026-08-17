@@ -21,6 +21,7 @@ import { ReportsModule } from './reports/reports.module';
 import { LessonLogsModule } from './lesson-logs/lesson-logs.module';
 import { GradesModule } from './grades/grades.module';
 import { ImportModule } from './import/import.module';
+import { ViolationsModule } from './violations/violations.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
 
 @Module({
@@ -46,6 +47,7 @@ import { SchedulerModule } from './scheduler/scheduler.module';
     LessonLogsModule,
     GradesModule,
     ImportModule,
+    ViolationsModule,
     SchedulerModule,
   ],
   providers: [

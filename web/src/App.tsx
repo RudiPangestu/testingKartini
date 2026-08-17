@@ -29,6 +29,7 @@ import NilaiPage from './pages/NilaiPage';
 import NilaiCetakPage from './pages/NilaiCetakPage';
 import DaftarHadirPage from './pages/DaftarHadirPage';
 import DaftarHadirCetakPage from './pages/DaftarHadirCetakPage';
+import PelanggaranPage from './pages/PelanggaranPage';
 import type { ReactElement } from 'react';
 
 // Beranda berbeda menurut peran: staf melihat dasbor sekolah, orang tua/murid
@@ -244,6 +245,14 @@ export default function App() {
           element={
             <Protected roles={['ADMIN']}>
               <SettingsPage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/pelanggaran"
+          element={
+            <Protected roles={['ADMIN']}>
+              <PelanggaranPage />
             </Protected>
           }
         />
